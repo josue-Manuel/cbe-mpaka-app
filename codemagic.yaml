@@ -10,16 +10,17 @@ workflows:
         script: npm install
       - name: Build Web App (Vite)
         script: npm run build
-      - name: Clean and Sync Capacitor Android
+      - name: Create Android Project
         script: |
-          # Cette ligne supprime le dossier corrompu s'il existe
+          # On s'assure que le dossier n'existe pas pour repartir à zéro
           rm -rf android
           npx cap add android
           npx cap sync android
       - name: Build Android APK
         script: |
           cd android
+          # Cette commande répare les permissions et force le téléchargement du bon Gradle
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
