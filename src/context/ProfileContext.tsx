@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { MemberProfile } from '../types/profile';
-import { auth, signInWithGoogle, logout, onAuthStateChanged, db, doc, getDoc, setDoc, updateDoc, User } from '../firebase';
+import { auth, signInWithGoogle, signInWithGoogleRedirect, getGoogleRedirectResult, logout, onAuthStateChanged, db, doc, getDoc, setDoc, updateDoc, User } from '../firebase';
+import { Capacitor } from '@capacitor/core';
 
 interface ProfileContextType {
   profile: MemberProfile | null;
@@ -23,19 +24,37 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Handle redirect result for mobile
+    const checkRedirect = async () => {
+      try {
+        const result = await getGoogleRedirectResult();
+        if (result?.user) {
+          console.log("Redirect sign-in success:", result.user.email);
+        }
+      } catch (error) {
+        console.error("Redirect sign-in error:", error);
+      }
+    };
+    
+    if (Capacitor.isNativePlatform()) {
+      checkRedirect();
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
-        // Fetch profile from Firestore
         try {
           const profileDoc = await getDoc(doc(db, 'members', currentUser.uid));
           if (profileDoc.exists()) {
             const profileData = profileDoc.data() as MemberProfile;
             setProfile(profileData);
-            setIsAdmin(profileData.role === 'admin' || currentUser.email === 'josuemanueljsm@gmail.com');
+            
+            // Check if admin
+            const adminEmails = ['josuemanueljsm@gmail.com'];
+            setIsAdmin(adminEmails.includes(currentUser.email || '') || profileData.role === 'admin');
           } else {
             setProfile(null);
-            setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com');
+            setIsAdmin(false);
           }
         } catch (error) {
           console.error("Error fetching profile:", error);
@@ -52,7 +71,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const login = async () => {
     try {
-      await signInWithGoogle();
+      if (Capacitor.isNativePlatform()) {
+        await signInWithGoogleRedirect();
+      } else {
+        await signInWithGoogle();
+      }
     } catch (error) {
       console.error("Login error:", error);
     }
@@ -68,54 +91,38 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const createProfile = async (data: Omit<MemberProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
+    const now = new Date().toISOString();
     const newProfile: MemberProfile = {
       ...data,
       id: user.uid,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
+      role: 'member'
     };
-    try {
-      await setDoc(doc(db, 'members', user.uid), newProfile);
-      setProfile(newProfile);
-    } catch (error) {
-      console.error("Error creating profile:", error);
-    }
+    await setDoc(doc(db, 'members', user.uid), newProfile);
+    setProfile(newProfile);
   };
 
   const updateProfile = async (data: Partial<MemberProfile>) => {
     if (!user || !profile) return;
-    const updatedProfile = {
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-    try {
-      await updateDoc(doc(db, 'members', user.uid), updatedProfile);
-      setProfile({ ...profile, ...updatedProfile });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-    }
+    const updatedProfile = { ...profile, ...data, updatedAt: new Date().toISOString() };
+    await updateDoc(doc(db, 'members', user.uid), data);
+    setProfile(updatedProfile);
   };
 
   const deleteProfile = async () => {
-    if (!user) return;
-    // We don't actually delete the user from Auth here, just the Firestore doc
-    try {
-      // await deleteDoc(doc(db, 'members', user.uid));
-      // setProfile(null);
-    } catch (error) {
-      console.error("Error deleting profile:", error);
-    }
+    // Logic for deleting profile if needed
   };
 
   return (
     <ProfileContext.Provider value={{ 
       profile, 
-      user,
+      user, 
       isLoading, 
       isAdmin, 
       updateProfile, 
       createProfile, 
-      deleteProfile, 
+      deleteProfile,
       login, 
       logout: handleLogout 
     }}>
@@ -124,10 +131,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useProfile() {
+export const useProfile = () => {
   const context = useContext(ProfileContext);
   if (context === undefined) {
     throw new Error('useProfile must be used within a ProfileProvider');
   }
   return context;
-}
+}; 
