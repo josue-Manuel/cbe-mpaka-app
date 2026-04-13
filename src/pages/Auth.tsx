@@ -19,13 +19,15 @@ export default function Auth() {
       navigate('/app');
     }
   }, [user, profile, isLoading, navigate]);
-
-  const handleGoogleLogin = async () => {
-    await login();
-    // After login, if profile exists, useEffect will navigate to /app
-    // If not, we stay here and the UI will show the registration form (step 2)
+ 
+const handleGoogleLogin = async () => {
+    try {
+      await login();
+      // Si la connexion réussit, le useEffect redirigera vers /app
+    } catch (error: any) {
+      alert("Erreur de connexion : " + (error.message || "Google bloque la connexion depuis cette application."));
+    }
   };
-
   const handleRegister = async () => {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.phone.trim()) {
       alert("Information manquante\nVeuillez remplir tous les champs obligatoires.");
