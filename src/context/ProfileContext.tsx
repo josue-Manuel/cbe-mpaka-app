@@ -69,17 +69,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const login = async () => {
+ const login = async () => {
     try {
-      if (Capacitor.isNativePlatform()) {
-        await signInWithGoogleRedirect();
-      } else {
-        await signInWithGoogle();
-      }
+      // On force le popup même sur mobile pour voir si la WebView l'autorise
+      await signInWithGoogle();
     } catch (error) {
       console.error("Login error:", error);
+      throw error; // On renvoie l'erreur pour l'afficher
     }
-  };
+  };  
 
   const handleLogout = async () => {
     try {
