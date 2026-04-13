@@ -10,9 +10,11 @@ workflows:
         script: npm install
       - name: Build Web App (Vite)
         script: npm run build
-      - name: Add and Sync Capacitor Android
+      - name: Clean and Sync Capacitor Android
         script: |
-          npx cap add android || true
+          # Cette ligne supprime le dossier corrompu s'il existe
+          rm -rf android
+          npx cap add android
           npx cap sync android
       - name: Build Android APK
         script: |
