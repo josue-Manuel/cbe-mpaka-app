@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+ import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { 
   Sparkles, 
@@ -19,7 +19,18 @@ import {
 } from 'lucide-react';
 import { useAppData } from '../context/AppDataContext';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!aiInstance) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error("Clé API Gemini manquante. L'assistant IA est désactivé.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey: key });
+  }
+  return aiInstance;
+};
 
 interface Message {
   role: 'user' | 'assistant';
@@ -123,7 +134,6 @@ export const AdminAssistant: React.FC = () => {
     setProposedAction(null);
 
     try {
-      // Prepare context for Gemini
       const today = new Date();
       const nextMonday = new Date();
       nextMonday.setDate(today.getDate() + ((7 - today.getDay()) % 7 + 1));
@@ -169,8 +179,9 @@ export const AdminAssistant: React.FC = () => {
         Réponds de manière professionnelle, encourageante et concise en français.
       `;
 
+      const ai = getAI();
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash",
         contents: [
           { role: 'user', parts: [{ text: context }] },
           ...messages.map(m => ({
@@ -183,7 +194,6 @@ export const AdminAssistant: React.FC = () => {
 
       const text = response.text || "Désolé, je n'ai pas pu générer de réponse.";
       
-      // Check for JSON action
       const jsonMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
       let cleanText = text;
       if (jsonMatch) {
@@ -207,7 +217,7 @@ export const AdminAssistant: React.FC = () => {
       console.error("Gemini Error:", error);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "Désolé, une erreur est survenue lors de la communication avec mon intelligence. Veuillez réessayer.",
+        content: error instanceof Error ? error.message : "Désolé, une erreur est survenue lors de la communication avec mon intelligence.",
         timestamp: new Date()
       }]);
     } finally {
@@ -241,7 +251,6 @@ export const AdminAssistant: React.FC = () => {
 
   return (
     <div className={`fixed bottom-24 right-6 z-50 transition-all duration-300 flex flex-col ${isMinimized ? 'h-14 w-64' : 'h-[500px] w-[350px] sm:w-[400px]'}`}>
-      {/* Header */}
       <div className="bg-[#1E3A8A] text-white p-4 rounded-t-2xl flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-2">
           <Bot size={20} />
@@ -259,7 +268,6 @@ export const AdminAssistant: React.FC = () => {
 
       {!isMinimized && (
         <>
-          {/* Messages Area */}
           <div className="flex-1 bg-white dark:bg-slate-800 border-x border-slate-200 dark:border-slate-700 overflow-y-auto p-4 space-y-4 scrollbar-hide">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -297,7 +305,6 @@ export const AdminAssistant: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Proposed Action Card */}
           {proposedAction && (
             <div className="mx-4 mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl shadow-sm animate-in slide-in-from-bottom-4">
               <div className="flex items-center gap-2 mb-3">
@@ -339,7 +346,6 @@ export const AdminAssistant: React.FC = () => {
             </div>
           )}
 
-          {/* Quick Actions */}
           <div className="bg-white dark:bg-slate-800 border-x border-slate-200 dark:border-slate-700 p-2 flex gap-2 overflow-x-auto scrollbar-hide">
             {quickActions.map((action, idx) => (
               <button
@@ -353,7 +359,6 @@ export const AdminAssistant: React.FC = () => {
             ))}
           </div>
 
-          {/* Input Area */}
           <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-b-2xl border-x border-b border-slate-200 dark:border-slate-700">
             <div className="relative">
               <input
