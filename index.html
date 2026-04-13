@@ -16,10 +16,27 @@
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100vw;color:white;font-family:sans-serif;">
         <h1 style="margin:0;font-size:28px;letter-spacing:1px;">CBE MPAKA</h1>
         <div style="margin-top:20px;width:40px;height:40px;border:3px solid rgba(255,255,255,0.3);border-radius:50%;border-top-color:white;animation:spin 1s ease-in-out infinite;"></div>
+        <p id="debug-status" style="margin-top:10px;font-size:12px;opacity:0.5;">Initialisation...</p>
+        <button id="fallback-btn" style="display:none;margin-top:20px;padding:10px 20px;background:white;color:#1E3A8A;border:none;border-radius:8px;font-weight:bold;" onclick="window.location.reload()">Réessayer</button>
         <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
       </div>
     </div>
-    <script type="module" src="src/main.tsx"></script>
+    <script>
+      setTimeout(function() {
+        var btn = document.getElementById('fallback-btn');
+        if (btn) btn.style.display = 'block';
+      }, 10000);
+      
+      window.onerror = function(msg, url, lineNo, columnNo, error) {
+        var debugStatus = document.getElementById('debug-status');
+        if (debugStatus) {
+          debugStatus.innerText = 'Erreur: ' + msg;
+          debugStatus.style.color = '#ff5252';
+          debugStatus.style.opacity = '1';
+        }
+        return false;
+      };
+    </script>
+    <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>
-
