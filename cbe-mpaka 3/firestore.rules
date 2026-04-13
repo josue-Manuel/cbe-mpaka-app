@@ -1,0 +1,203 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: announcements
+    // Fields: title (string), content (string), date (string), category (string), author (string), isUrgent (bool)
+    //
+    // Collection: prayers
+    // Fields: author (string), content (string), date (string), category (string), likes (number), isUrgent (bool), status (string), isAnonymous (bool), userId (string)
+    //
+    // Collection: activities
+    // Fields: title (string), date (string), time (string), location (string), type (string), day (string), fullDate (string)
+    //
+    // Collection: testimonies
+    // Fields: author (string), title (string), content (string), date (string), category (string), likes (number), isAnonymous (bool), status (string), userId (string)
+    //
+    // Collection: members
+    // Fields: name (string), email (string), phone (string), role (string), status (string), joinDate (string), birthDate (string), photoUrl (string)
+    //
+    // Collection: contributionCategories
+    // Fields: name (string), description (string), targetAmount (number)
+    //
+    // Collection: contributionRecords
+    // Fields: categoryId (string), memberName (string), amount (number), date (string), userId (string)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "josuemanueljsm@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Domain Validators
+    function isValidAnnouncement(data) {
+      return hasOnlyAllowedFields(['title', 'content', 'date', 'category', 'author', 'isUrgent']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
+             data.date is string && data.category is string && data.author is string && data.isUrgent is bool;
+    }
+
+    function isValidPrayer(data) {
+      return hasOnlyAllowedFields(['author', 'content', 'date', 'category', 'likes', 'isUrgent', 'status', 'isAnonymous', 'userId']) &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 2000 &&
+             data.status in ['pending', 'approved', 'rejected'] &&
+             data.likes is number && data.isUrgent is bool && data.isAnonymous is bool && data.userId is string;
+    }
+
+    function isValidMember(data) {
+      return hasOnlyAllowedFields(['id', 'firstName', 'lastName', 'phone', 'gender', 'group', 'function', 'privacyAccepted', 'createdAt', 'updatedAt', 'role', 'status', 'photoUrl', 'joinDate', 'birthDate']) &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 50 &&
+             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 50 &&
+             data.phone is string && data.phone.size() >= 0 && data.phone.size() < 20 &&
+             data.role in ['admin', 'member'] &&
+             data.status in ['active', 'pending', 'blocked'];
+    }
+
+    function isValidTestimony(data) {
+      return hasOnlyAllowedFields(['author', 'title', 'content', 'date', 'category', 'likes', 'isAnonymous', 'status', 'userId']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
+             data.status in ['pending', 'approved', 'rejected'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /announcements/{id} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidAnnouncement(request.resource.data);
+    }
+
+    match /activities/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /prayers/{id} {
+      allow read: if true; // Publicly readable for the community to pray
+      allow create: if isAuthenticated() && isValidPrayer(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes']))) && isValidPrayer(request.resource.data);
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+
+    match /testimonies/{id} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidTestimony(request.resource.data) && request.resource.data.userId == request.auth.uid;
+      allow update: if (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes']))) && isValidTestimony(request.resource.data);
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+
+    match /members/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() || (isAuthenticated() && isOwner(userId) && isValidMember(request.resource.data) && request.resource.data.role == 'member');
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role && areImmutableFieldsUnchanged(['joinDate', 'id']));
+      allow delete: if isAdmin();
+    }
+
+    match /contributionCategories/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /contributionRecords/{id} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAdmin() || (isAuthenticated() && request.resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /dailyVerses/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /weeklyThemes/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /meditations/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /galleryEvents/{document=**} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if true; // Allow anyone to like media
+    }
+
+    match /socialLinks/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /bureauMembers/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /leaderMessage/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cantiques/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /aboutInfo/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /contactInfo/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /contactMessages/{document=**} {
+      allow create: if true;
+      allow read, delete: if isAdmin();
+    }
+    
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

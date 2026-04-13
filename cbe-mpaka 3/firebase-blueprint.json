@@ -1,0 +1,172 @@
+{
+  "entities": {
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Church announcements and news",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "date": { "type": "string" },
+        "category": { "type": "string" },
+        "content": { "type": "string" },
+        "author": { "type": "string" },
+        "isUrgent": { "type": "boolean" }
+      },
+      "required": ["title", "content", "date"]
+    },
+    "Prayer": {
+      "title": "Prayer",
+      "description": "Prayer requests from members",
+      "type": "object",
+      "properties": {
+        "author": { "type": "string" },
+        "date": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "likes": { "type": "number" },
+        "isUrgent": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "isAnonymous": { "type": "boolean" },
+        "userId": { "type": "string" }
+      },
+      "required": ["content", "status"]
+    },
+    "Activity": {
+      "title": "Activity",
+      "description": "Scheduled church activities",
+      "type": "object",
+      "properties": {
+        "day": { "type": "string" },
+        "date": { "type": "string" },
+        "fullDate": { "type": "string" },
+        "title": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "type": { "type": "string" }
+      },
+      "required": ["title", "date", "time"]
+    },
+    "Testimony": {
+      "title": "Testimony",
+      "description": "Member testimonies",
+      "type": "object",
+      "properties": {
+        "author": { "type": "string" },
+        "date": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "content": { "type": "string" },
+        "likes": { "type": "number" },
+        "isAnonymous": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "userId": { "type": "string" }
+      },
+      "required": ["title", "content", "status"]
+    },
+    "Member": {
+      "title": "Member",
+      "description": "Church member profile",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "member"] },
+        "status": { "type": "string", "enum": ["active", "pending", "blocked"] },
+        "joinDate": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "photoUrl": { "type": "string" }
+      },
+      "required": ["name", "email", "role", "status"]
+    },
+    "ContributionCategory": {
+      "title": "ContributionCategory",
+      "description": "Categories for financial contributions",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "targetAmount": { "type": "number" }
+      },
+      "required": ["name"]
+    },
+    "ContributionRecord": {
+      "title": "ContributionRecord",
+      "description": "Records of individual contributions",
+      "type": "object",
+      "properties": {
+        "categoryId": { "type": "string" },
+        "memberName": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["categoryId", "amount", "date"]
+    },
+    "DailyVerse": {
+      "title": "DailyVerse",
+      "description": "Daily bible verses",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "reference": { "type": "string" },
+        "text": { "type": "string" },
+        "exhortation": { "type": "string" },
+        "themeId": { "type": "string" }
+      },
+      "required": ["date", "reference", "text"]
+    },
+    "WeeklyTheme": {
+      "title": "WeeklyTheme",
+      "description": "Weekly spiritual themes",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "reference": { "type": "string" },
+        "text": { "type": "string" },
+        "description": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" }
+      },
+      "required": ["title", "startDate", "endDate"]
+    },
+    "DailyMeditation": {
+      "title": "DailyMeditation",
+      "description": "Daily spiritual meditations",
+      "type": "object",
+      "properties": {
+        "reference": { "type": "string" },
+        "text": { "type": "string" },
+        "exhortation": { "type": "string" },
+        "date": { "type": "string" }
+      },
+      "required": ["reference", "text", "date"]
+    },
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Messages from contact form",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "date": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["name", "subject", "message", "date"]
+    }
+  },
+  "firestore": {
+    "announcements": { "schema": "Announcement", "description": "Global announcements" },
+    "prayers": { "schema": "Prayer", "description": "Prayer requests" },
+    "activities": { "schema": "Activity", "description": "Church calendar" },
+    "testimonies": { "schema": "Testimony", "description": "Member testimonies" },
+    "members": { "schema": "Member", "description": "Member directory" },
+    "contributionCategories": { "schema": "ContributionCategory", "description": "Project categories" },
+    "contributionRecords": { "schema": "ContributionRecord", "description": "Financial records" },
+    "dailyVerses": { "schema": "DailyVerse", "description": "Daily bible verses" },
+    "weeklyThemes": { "schema": "WeeklyTheme", "description": "Weekly themes" },
+    "meditations": { "schema": "DailyMeditation", "description": "Daily meditations" },
+    "contactMessages": { "schema": "ContactMessage", "description": "Contact form messages" }
+  }
+}
