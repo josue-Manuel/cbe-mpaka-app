@@ -1,5 +1,5 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+ import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, addDoc, serverTimestamp, Timestamp, getDocFromServer } from 'firebase/firestore';
 
 // Import the Firebase configuration
@@ -13,6 +13,8 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Auth helpers
 export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const signInWithGoogleRedirect = () => signInWithRedirect(auth, googleProvider);
+export const getGoogleRedirectResult = () => getRedirectResult(auth);
 export const logout = () => signOut(auth);
 
 export enum OperationType {
@@ -65,8 +67,6 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
-
-// Connection test removed to prevent potential hangs on startup
 
 export { 
   onAuthStateChanged, 
