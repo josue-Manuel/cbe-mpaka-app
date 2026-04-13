@@ -1,4 +1,4 @@
-import { CapacitorConfig } from '@capacitor/cli';
+ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.cbempaka.app',
@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   bundledWebRuntime: false,
   server: {
-    androidScheme: 'https'
+    androidScheme: 'http'
   }
 };
 
