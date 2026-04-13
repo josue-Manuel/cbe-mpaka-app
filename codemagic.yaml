@@ -12,15 +12,14 @@ workflows:
         script: npm run build
       - name: Create Android Project
         script: |
-          # On s'assure que le dossier n'existe pas pour repartir à zéro
           rm -rf android
           npx cap add android
           npx cap sync android
       - name: Build Android APK
         script: |
           cd android
-          # Cette commande répare les permissions et force le téléchargement du bon Gradle
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
+  
