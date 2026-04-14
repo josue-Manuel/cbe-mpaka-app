@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+  import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Home, BookOpen, Bell, Calendar, Heart, 
   Music, Image as ImageIcon, Users, Sparkles, Plus,
-  User, Info, Phone, CloudOff, Shield, Book, ListTodo, HelpCircle, Wallet, Settings as SettingsIcon, Smartphone
+  User, Info, Phone, CloudOff, Shield, Book, Wallet, Settings as SettingsIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -15,27 +15,6 @@ interface SidebarProps {
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
-  useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const handleInstall = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult: any) => {
-        setDeferredPrompt(null);
-      });
-    } else {
-      alert("Pour installer l'application :\n\n• Sur Android : Menu (⋮) > Installer l'application\n• Sur iPhone : Partager (↑) > Sur l'écran d'accueil");
-    }
-  };
 
   // Close sidebar when route changes
   useEffect(() => {
@@ -125,14 +104,6 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
               {/* Admin Section */}
               <div className="px-4 pb-4 space-y-3">
-                <button 
-                  onClick={handleInstall}
-                  className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md shadow-blue-200 dark:shadow-none active:scale-95 transition-transform"
-                >
-                  <Smartphone size={18} />
-                  Installer l'App 📱
-                </button>
-
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 mt-4">Administration</p>
                 <button 
                   onClick={() => navigate('/app/admin')}
@@ -160,4 +131,5 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
     </AnimatePresence>
   );
-}
+      }  
+                  
