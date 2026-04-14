@@ -56,13 +56,15 @@ export default function Auth() {
         group: 'Jeunesse',
         function: 'Membre',
         role: 'member',
-        privacyAccepted: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        privacyAccepted: true
       });
-      navigate('/app');
+      // La navigation se fera via le useEffect une fois le profil créé
     } catch (error: any) {
-      alert("Erreur d'inscription : " + (error.message || "Une erreur est survenue."));
+      if (error.code === 'auth/email-already-in-use') {
+        alert("Cet email est déjà utilisé. Essayez de vous connecter.");
+      } else {
+        alert("Erreur d'inscription : " + (error.message || "Une erreur est survenue."));
+      }
     } finally { setIsSubmitting(false); }
   };
 
@@ -82,7 +84,6 @@ export default function Auth() {
         role: 'member',
         privacyAccepted: true
       });
-      navigate('/app');
     } catch (error) { alert("Erreur lors de la création du profil."); } 
     finally { setIsSubmitting(false); }
   };
@@ -199,4 +200,4 @@ export default function Auth() {
       </div>
     </div>
   );
-    }
+        }
