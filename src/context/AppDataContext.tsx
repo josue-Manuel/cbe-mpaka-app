@@ -681,7 +681,13 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             isAdmin = true;
           }
         } catch (e) {
-          console.error("Error checking admin status", e);
+          const msg = e instanceof Error ? e.message : String(e);
+          if (msg.includes('offline')) {
+            console.warn("Offline: Could not verify admin status from server, using email fallback.");
+            if (user.email === 'josuemanueljsm@gmail.com') isAdmin = true;
+          } else {
+            console.error("Error checking admin status", e);
+          }
         }
 
         if (isAdmin) {

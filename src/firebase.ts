@@ -14,15 +14,53 @@ import {
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, addDoc, serverTimestamp, Timestamp, getDocFromServer } from 'firebase/firestore';
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, addDoc, serverTimestamp, Timestamp, getDocFromServer, enableIndexedDbPersistence } from 'firebase/firestore';
 
 // Import the Firebase configuration
 import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase SDK
+console.log("Firebase Config Loaded:", {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  databaseId: firebaseConfig.firestoreDatabaseId,
+  appId: firebaseConfig.appId
+});
+
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Enable offline persistence for WhatsApp-like experience
+if (typeof window !== 'undefined') {
+  enableIndexedDbPersistence(db).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn('Firestore persistence failed: multiple tabs open');
+    } else if (err.code === 'unimplemented') {
+      console.warn('Firestore persistence is not supported by this browser');
+    }
+  });
+}
+
 export const auth = getAuth(app);
+
+// Connection test to verify Firestore connectivity
+async function testConnection() {
+  try {
+    console.log("Testing Firestore connection with Database ID:", firebaseConfig.firestoreDatabaseId);
+    // Use getDocFromServer to force a network request and bypass cache
+    // Path matches firestore.rules: match /test/connection { allow read: if true; }
+    await getDocFromServer(doc(db, 'test', 'connection'));
+    console.log("Firestore connection successful.");
+  } catch (error) {
+    console.error("Firestore connection test failed:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('offline') || msg.includes('Could not reach')) {
+      console.error("Firestore Connection Failed: The client is offline or cannot reach the backend. This often indicates a project ID or database ID mismatch.");
+    }
+  }
+}
+
+testConnection();
 
 // Set persistence explicitly
 setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence error:", err));
@@ -97,8 +135,6 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     throw new Error(JSON.stringify(errInfo));
   }
 }
-
-// Connection test removed to prevent potential hangs on startup
 
 export { 
   onAuthStateChanged, 

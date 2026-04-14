@@ -48,17 +48,28 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       if (currentUser) {
         // Fetch profile from Firestore
         try {
+          // Use getDoc which will use cache if offline and persistence is enabled
           const profileDoc = await getDoc(doc(db, 'members', currentUser.uid));
           if (profileDoc.exists()) {
             const profileData = profileDoc.data() as MemberProfile;
             setProfile(profileData);
             setIsAdmin(profileData.role === 'admin' || currentUser.email === 'josuemanueljsm@gmail.com');
           } else {
+            // Only set profile to null if we are sure it doesn't exist (online check)
+            // If we are offline and it's not in cache, exists() will be false
+            // but we might want to wait or show a different state.
             setProfile(null);
             setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com');
           }
         } catch (error) {
-          console.error("Error fetching profile:", error);
+          const msg = error instanceof Error ? error.message : String(error);
+          if (msg.includes('offline')) {
+            console.warn("Firestore is offline, using cached profile if available.");
+            // If we have a cached version, getDoc should have returned it.
+            // If it didn't, we stay in the current state (profile null) but maybe we shouldn't redirect to setup.
+          } else {
+            console.error("Error fetching profile:", error);
+          }
         }
       } else {
         setProfile(null);

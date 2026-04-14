@@ -26,8 +26,15 @@ export default function Auth() {
     if (!isLoading && user) {
       if (profile) {
         navigate('/app');
-      } else {
+      } else if (navigator.onLine) {
+        // Only force profile setup if we are online and sure it's missing
         setAuthMode('profile_setup');
+      } else {
+        // Offline and profile not in cache. 
+        // We can't do much, but let's not force setup.
+        // Maybe the user can still access some parts of the app?
+        // For now, let's just wait or show a message.
+        console.log("Offline and profile missing from cache. Waiting for connection.");
       }
     }
   }, [user, profile, isLoading, navigate]);
@@ -37,7 +44,14 @@ export default function Auth() {
       setIsSubmitting(true);
       await login();
     } catch (error: any) {
-      alert("Erreur Google : " + (error.message || "Impossible d'ouvrir la page de connexion."));
+      console.error("Google login error details:", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        alert("Erreur : Ce domaine n'est pas autorisé dans la console Firebase. Veuillez ajouter '" + window.location.hostname + "' aux domaines autorisés dans Authentication > Settings > Authorized domains.");
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        // Ignore user closing popup
+      } else {
+        alert("Erreur Google : " + (error.message || "Impossible d'ouvrir la page de connexion."));
+      }
     } finally {
       setIsSubmitting(false);
     }
