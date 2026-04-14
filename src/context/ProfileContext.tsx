@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { MemberProfile } from '../types/profile';
 import { auth, signInWithGoogle, logout, onAuthStateChanged, db, doc, getDoc, setDoc, updateDoc, User } from '../firebase';
+import { Capacitor } from '@capacitor/core';
 
 interface ProfileContextType {
   profile: MemberProfile | null;
@@ -25,6 +26,23 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Gestion du retour de redirection Google pour mobile
+    const checkRedirect = async () => {
+      try {
+        const { getGoogleRedirectResult } = await import('../firebase');
+        const result = await getGoogleRedirectResult();
+        if (result?.user) {
+          console.log("Connexion Google réussie");
+        }
+      } catch (error) {
+        console.error("Erreur redirection Google:", error);
+      }
+    };
+    
+    if (Capacitor.isNativePlatform()) {
+      checkRedirect();
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -39,7 +57,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
             setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com');
           }
         } catch (error) {
-          console.error("Error fetching profile:", error);
+          console.error("Erreur récupération profil:", error);
         }
       } else {
         setProfile(null);
@@ -53,7 +71,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const login = async () => {
     try {
-      await signInWithGoogle();
+      if (Capacitor.isNativePlatform()) {
+        const { signInWithGoogleRedirect } = await import('../firebase');
+        await signInWithGoogleRedirect();
+      } else {
+        await signInWithGoogle();
+      }
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -65,7 +88,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const { signInWithEmailAndPassword } = await import('../firebase');
       await signInWithEmailAndPassword(auth, email, pass);
     } catch (error) {
-      console.error("Email login error:", error);
       throw error;
     }
   };
@@ -83,6 +105,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const newProfile: MemberProfile = {
         ...profileData,
         id: newUser.uid,
+        status: 'pending', // OBLIGATOIRE pour les règles de sécurité
+        role: 'member',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -90,7 +114,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       await setDoc(doc(db, 'members', newUser.uid), newProfile);
       setProfile(newProfile);
     } catch (error) {
-      console.error("Email registration error:", error);
       throw error;
     }
   };
@@ -108,6 +131,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     const newProfile: MemberProfile = {
       ...data,
       id: user.uid,
+      status: 'pending', // OBLIGATOIRE
+      role: 'member',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -116,6 +141,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       setProfile(newProfile);
     } catch (error) {
       console.error("Error creating profile:", error);
+      throw error;
     }
   };
 
@@ -145,4 +171,4 @@ export function useProfile() {
   const context = useContext(ProfileContext);
   if (context === undefined) throw new Error('useProfile must be used within a ProfileProvider');
   return context;
-          }
+  }
