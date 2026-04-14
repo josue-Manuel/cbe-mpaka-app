@@ -17,12 +17,7 @@ workflows:
       - name: Build Android APK
         script: |
           cd android
-          echo "Removing corrupted gradle wrapper..."
-          rm -f gradle/wrapper/gradle-wrapper.jar
-          mkdir -p gradle/wrapper
-          echo "Downloading fresh gradle wrapper..."
-          curl -L -f -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar
-          chmod +x gradlew
-          ./gradlew assembleDebug
+          rm -rf gradle/wrapper
+          gradle assembleDebug
     artifacts:
       - android/app/build/outputs/apk/debug/app-debug.apk
