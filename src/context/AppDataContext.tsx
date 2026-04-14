@@ -688,7 +688,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           unsubContactMessages = onSnapshot(collection(db, 'contactMessages'), (snapshot) => {
             setContactMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage)));
           }, (error: any) => {
-            if (error.code !== 'permission-denied' && !String(error.message || '').toLowerCase().includes('permission')) {
+            const isPermError = error?.code === 'permission-denied' || String(error?.message || error).toLowerCase().includes('permission');
+            if (!isPermError) {
               handleFirestoreError(error, OperationType.LIST, 'contactMessages');
             } else {
               console.warn("Permission denied accessing contactMessages, likely not an admin yet.");
@@ -700,7 +701,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member)));
         }, (error: any) => {
           // Ignore permission errors for non-admins if they try to list all members
-          if (error.code !== 'permission-denied' && !String(error.message || '').toLowerCase().includes('permission')) {
+          const isPermError = error?.code === 'permission-denied' || String(error?.message || error).toLowerCase().includes('permission');
+          if (!isPermError) {
             handleFirestoreError(error, OperationType.LIST, 'members');
           } else {
             console.warn("Permission denied accessing members.");
@@ -710,7 +712,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         unsubCategories = onSnapshot(collection(db, 'contributionCategories'), (snapshot) => {
           setContributionCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContributionCategory)));
         }, (error: any) => {
-          if (error.code !== 'permission-denied' && !String(error.message || '').toLowerCase().includes('permission')) {
+          const isPermError = error?.code === 'permission-denied' || String(error?.message || error).toLowerCase().includes('permission');
+          if (!isPermError) {
             handleFirestoreError(error, OperationType.LIST, 'contributionCategories');
           } else {
             console.warn("Permission denied accessing contributionCategories.");
@@ -721,7 +724,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         unsubRecords = onSnapshot(recordsQuery, (snapshot) => {
           setContributionRecords(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContributionRecord)));
         }, (error: any) => {
-          if (error.code !== 'permission-denied' && !String(error.message || '').toLowerCase().includes('permission')) {
+          const isPermError = error?.code === 'permission-denied' || String(error?.message || error).toLowerCase().includes('permission');
+          if (!isPermError) {
             handleFirestoreError(error, OperationType.LIST, 'contributionRecords');
           } else {
             console.warn("Permission denied accessing contributionRecords.");
