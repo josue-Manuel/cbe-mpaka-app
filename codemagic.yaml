@@ -10,14 +10,14 @@ workflows:
         script: npm install
       - name: Build Web App (Vite)
         script: npm run build
+      - name: Fix Corrupted Gradle Wrapper
+        script: |
+          mkdir -p android/gradle/wrapper
+          curl -L -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar
       - name: Add and Sync Capacitor Android
         script: |
           npx cap add android || true
           npx cap sync android
-      - name: Fix Gradle Wrapper
-        script: |
-          cd android/gradle/wrapper
-          curl -L -o gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.10.2/gradle/wrapper/gradle-wrapper.jar
       - name: Build Android APK
         script: |
           cd android
