@@ -151,6 +151,7 @@ export default function Admin() {
     // Group members by month of joinDate
     const months: Record<string, number> = {};
     members.forEach(m => {
+      if (!m.joinDate) return;
       const date = new Date(m.joinDate);
       if (isNaN(date.getTime())) return;
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -238,7 +239,8 @@ export default function Admin() {
 
   const renderMembersModule = () => {
     const filteredMembers = members.filter(m => {
-      const matchesSearch = (m.name || '').toLowerCase().includes((memberSearch || '').toLowerCase()) || 
+      const fullName = `${m.firstName} ${m.lastName}`.toLowerCase();
+      const matchesSearch = fullName.includes((memberSearch || '').toLowerCase()) || 
                             (m.email || '').toLowerCase().includes((memberSearch || '').toLowerCase()) ||
                             (m.phone || '').includes(memberSearch || '');
       const matchesFilter = memberFilter === 'all' || m.status === memberFilter;
@@ -354,7 +356,7 @@ export default function Admin() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    {admin.name}
+                    {admin.firstName} {admin.lastName}
                     {admin.id === '1' && <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 px-2 py-0.5 rounded-md">Fondateur</span>}
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">{admin.email}</p>
@@ -362,7 +364,7 @@ export default function Admin() {
               </div>
               {admin.id !== '1' && (
                 <button 
-                  onClick={() => confirmAction('Retirer les droits', `Voulez-vous retirer les droits d'administration à ${admin.name} ?`, () => {
+                  onClick={() => confirmAction('Retirer les droits', `Voulez-vous retirer les droits d'administration à ${admin.firstName} ${admin.lastName} ?`, () => {
                     if (adminMembers.length <= 1) {
                       alert("Impossible de supprimer le dernier administrateur.");
                       return;
@@ -777,7 +779,7 @@ export default function Admin() {
           <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Membres Actifs</p>
           <div className="flex items-end justify-between">
             <h4 className="text-2xl font-bold text-slate-800 dark:text-white">{members.filter(m => m.status === 'active').length}</h4>
-            <span className="text-[10px] text-emerald-500 font-bold">+{members.filter(m => m.status === 'active' && m.joinDate.startsWith(new Date().toISOString().slice(0, 7))).length} ce mois</span>
+            <span className="text-[10px] text-emerald-500 font-bold">+{members.filter(m => m.status === 'active' && m.joinDate && m.joinDate.startsWith(new Date().toISOString().slice(0, 7))).length} ce mois</span>
           </div>
         </div>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
@@ -2269,9 +2271,9 @@ export default function Admin() {
 
         {/* Values Preview */}
         <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-          <h3 className="font-bold text-[#1E3A8A] dark:text-blue-400 mb-4">Valeurs ({aboutInfo.values.length})</h3>
+          <h3 className="font-bold text-[#1E3A8A] dark:text-blue-400 mb-4">Valeurs ({aboutInfo.values?.length || 0})</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {aboutInfo.values.map((val, idx) => (
+            {aboutInfo.values?.map((val, idx) => (
               <div key={idx} className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-[#D9A05B] font-bold text-sm">{val.title}</span>
@@ -2286,7 +2288,7 @@ export default function Admin() {
         <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
           <h3 className="font-bold text-[#1E3A8A] dark:text-blue-400 mb-4">Timeline Historique</h3>
           <div className="space-y-3">
-            {aboutInfo.historyTimeline.map((event) => (
+            {aboutInfo.historyTimeline?.map((event) => (
               <div key={event.id} className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl">
                 <span className="font-bold text-sm text-[#D9A05B] shrink-0 w-12">{event.year}</span>
                 <p className="text-xs text-slate-600 dark:text-slate-400">{event.description}</p>
@@ -3701,9 +3703,6 @@ export default function Admin() {
           </div>
         </div>
       )}
-
-      {/* Messages de Contact */}
-      {renderMessagesModule()}
     </div>
   );
 }

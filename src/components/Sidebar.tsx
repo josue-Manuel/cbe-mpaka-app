@@ -1,10 +1,10 @@
-  import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Home, BookOpen, Bell, Calendar, Heart, 
   Music, Image as ImageIcon, Users, Sparkles, Plus,
-  User, Info, Phone, CloudOff, Shield, Book, Wallet, Settings as SettingsIcon
+  User, Info, Phone, CloudOff, Shield, Book, ListTodo, HelpCircle, Wallet, Settings as SettingsIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -131,5 +131,4 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
     </AnimatePresence>
   );
-      }  
-                  
+}

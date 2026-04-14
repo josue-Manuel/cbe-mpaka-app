@@ -608,9 +608,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setCantiques(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Cantique)));
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'cantiques'));
 
-    const unsubContactMessages = onSnapshot(collection(db, 'contactMessages'), (snapshot) => {
-      setContactMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage)));
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'contactMessages'));
+    let unsubContactMessages: () => void = () => {};
 
     const unsubLeaderMessage = onSnapshot(doc(db, 'leaderMessage', 'current'), (docSnap) => {
       if (docSnap.exists()) {
@@ -648,12 +646,26 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           console.error("Error checking admin status", e);
         }
 
+        if (isAdmin) {
+          unsubContactMessages = onSnapshot(collection(db, 'contactMessages'), (snapshot) => {
+            setContactMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage)));
+          }, (error: any) => {
+            if (error.code !== 'permission-denied' && !String(error.message || '').toLowerCase().includes('permission')) {
+              handleFirestoreError(error, OperationType.LIST, 'contactMessages');
+            } else {
+              console.warn("Permission denied accessing contactMessages, likely not an admin yet.");
+            }
+          });
+        }
+
         unsubMembers = onSnapshot(collection(db, 'members'), (snapshot) => {
           setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member)));
         }, (error: any) => {
           // Ignore permission errors for non-admins if they try to list all members
           if (error.code !== 'permission-denied' && !String(error.message || '').toLowerCase().includes('permission')) {
             handleFirestoreError(error, OperationType.LIST, 'members');
+          } else {
+            console.warn("Permission denied accessing members.");
           }
         });
 
@@ -662,6 +674,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }, (error: any) => {
           if (error.code !== 'permission-denied' && !String(error.message || '').toLowerCase().includes('permission')) {
             handleFirestoreError(error, OperationType.LIST, 'contributionCategories');
+          } else {
+            console.warn("Permission denied accessing contributionCategories.");
           }
         });
 
@@ -671,15 +685,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }, (error: any) => {
           if (error.code !== 'permission-denied' && !String(error.message || '').toLowerCase().includes('permission')) {
             handleFirestoreError(error, OperationType.LIST, 'contributionRecords');
+          } else {
+            console.warn("Permission denied accessing contributionRecords.");
           }
         });
       } else {
         unsubMembers();
         unsubCategories();
         unsubRecords();
+        unsubContactMessages();
         setMembers([]);
         setContributionCategories([]);
         setContributionRecords([]);
+        setContactMessages([]);
       }
     });
 

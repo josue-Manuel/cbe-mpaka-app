@@ -162,41 +162,54 @@ export default function Home() {
         <div>
           <h2 className="text-[#1E3A8A] dark:text-blue-400 font-bold text-lg mb-4">Accès rapide</h2>
           <div className="grid grid-cols-3 gap-3">
+            {/* Méditation */}
             <button onClick={() => navigate('/app/meditation')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#2563EB] rounded-xl flex items-center justify-center shadow-sm">
                 <BookOpen size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Méditation</span>
             </button>
+            {/* Activités */}
             <button onClick={() => navigate('/app/activities')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#059669] rounded-xl flex items-center justify-center shadow-sm">
                 <Calendar size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Agenda</span>
             </button>
+            {/* Annonces */}
             <button onClick={() => navigate('/app/announcements')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#EA580C] rounded-xl flex items-center justify-center shadow-sm">
                 <Bell size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Annonces</span>
             </button>
+            {/* Prière */}
             <button onClick={() => navigate('/app/prayer')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#E11D48] rounded-xl flex items-center justify-center shadow-sm">
                 <MessageSquare size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Prière</span>
             </button>
+            {/* Galerie */}
             <button onClick={() => navigate('/app/gallery')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#D9A05B] rounded-xl flex items-center justify-center shadow-sm">
                 <Sparkles size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Galerie</span>
             </button>
+            {/* Témoignages */}
             <button onClick={() => navigate('/app/testimonies')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#F59E0B] rounded-xl flex items-center justify-center shadow-sm">
                 <Sparkles size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Témoignages</span>
+            </button>
+            {/* Offline */}
+            <button onClick={() => navigate('/app/offline')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
+              <div className="w-12 h-12 bg-[#10B981] rounded-xl flex items-center justify-center shadow-sm">
+                <CloudOff size={24} className="text-white" />
+              </div>
+              <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Offline</span>
             </button>
           </div>
         </div>
@@ -214,6 +227,9 @@ export default function Home() {
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">{weeklyTheme.reference}</p>
           <p className="text-slate-600 dark:text-slate-300 italic text-sm leading-relaxed mb-4">
             « {weeklyTheme.text.length > 120 ? weeklyTheme.text.substring(0, 120) + '...' : weeklyTheme.text} »
+          </p>
+          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+            {weeklyTheme.description.length > 150 ? weeklyTheme.description.substring(0, 150) + '...' : weeklyTheme.description}
           </p>
         </div>
 
@@ -299,4 +315,4 @@ export default function Home() {
       )}
     </div>
   );
-              }
+}

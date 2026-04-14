@@ -1,0 +1,8 @@
+{
+	"appId": "com.cbempaka.app",
+	"appName": "CBE Mpaka",
+	"webDir": "dist",
+	"android": {
+		"allowMixedContent": true
+	}
+}
