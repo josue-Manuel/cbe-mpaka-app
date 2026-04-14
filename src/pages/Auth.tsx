@@ -52,7 +52,14 @@ export default function Auth() {
       setIsSubmitting(true);
       await loginWithEmail(email, password);
     } catch (error: any) {
-      alert("Erreur : Identifiants incorrects ou compte inexistant.");
+      console.error("Login error details:", error);
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        alert("Erreur : Identifiants incorrects ou compte inexistant.");
+      } else if (error.code === 'auth/too-many-requests') {
+        alert("Erreur : Trop de tentatives échouées. Veuillez réessayer plus tard.");
+      } else {
+        alert("Erreur de connexion : " + (error.message || "Une erreur est survenue."));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -83,7 +90,16 @@ export default function Auth() {
       });
       navigate('/app');
     } catch (error: any) {
-      alert("Erreur d'inscription : " + (error.message || "Une erreur est survenue."));
+      console.error("Registration error details:", error);
+      if (error.code === 'auth/email-already-in-use') {
+        alert("Erreur : Cette adresse email est déjà utilisée. Veuillez vous connecter ou utiliser une autre adresse.");
+      } else if (error.code === 'auth/invalid-email') {
+        alert("Erreur : L'adresse email est invalide.");
+      } else if (error.code === 'auth/weak-password') {
+        alert("Erreur : Le mot de passe est trop faible.");
+      } else {
+        alert("Erreur d'inscription : " + (error.message || "Une erreur est survenue."));
+      }
     } finally {
       setIsSubmitting(false);
     }
