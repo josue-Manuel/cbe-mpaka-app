@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Menu, Sparkles, BookOpen, ChevronRight, ArrowRight, Calendar, Bell, CloudOff, BellRing, Cake, Lock, MessageSquare, X, Smartphone } from 'lucide-react';
+import { Menu, Sparkles, BookOpen, ChevronRight, ArrowRight, Calendar, Bell, CloudOff, BellRing, Cake, Lock, MessageSquare, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useProfile } from '../context/ProfileContext';
 import { useNotification } from '../context/NotificationContext';
@@ -14,26 +14,6 @@ export default function Home() {
   const { dailyMeditation, currentDailyVerse, weeklyTheme, leaderMessage, members } = useAppData();
   const [wished, setWished] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(true);
-
-  useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
-
-  const handleInstall = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => setDeferredPrompt(null));
-    } else {
-      alert("Pour installer l'application :\n\n• Sur Android : Menu (⋮) > Installer l'application\n• Sur iPhone : Partager (↑) > Sur l'écran d'accueil");
-    }
-  };
 
   // Calculate today's birthdays
   const birthdayMembers = useMemo(() => {
@@ -110,37 +90,6 @@ export default function Home() {
       {/* Content Container (overlapping header) */}
       <div className="px-4 -mt-14 space-y-6 relative z-10">
         
-        {/* Install App Banner */}
-        {showInstallBanner && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-blue-600 rounded-2xl p-4 shadow-lg flex items-center gap-4 text-white"
-          >
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center shrink-0">
-              <Smartphone size={24} />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">Installer CBE Mpaka 📱</h3>
-              <p className="text-[10px] opacity-90">Accédez à l'application plus rapidement depuis votre écran d'accueil.</p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <button 
-                onClick={handleInstall}
-                className="bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full whitespace-nowrap active:scale-95 transition-transform"
-              >
-                Installer
-              </button>
-              <button 
-                onClick={() => setShowInstallBanner(false)}
-                className="text-white/60 text-[10px] font-medium"
-              >
-                Plus tard
-              </button>
-            </div>
-          </motion.div>
-        )}
-
         {/* Birthday Banner */}
         {birthdayMembers.length > 0 && (
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-md border-l-4 border-pink-400 flex items-center gap-4">
@@ -213,54 +162,41 @@ export default function Home() {
         <div>
           <h2 className="text-[#1E3A8A] dark:text-blue-400 font-bold text-lg mb-4">Accès rapide</h2>
           <div className="grid grid-cols-3 gap-3">
-            {/* Méditation */}
             <button onClick={() => navigate('/app/meditation')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#2563EB] rounded-xl flex items-center justify-center shadow-sm">
                 <BookOpen size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Méditation</span>
             </button>
-            {/* Activités */}
             <button onClick={() => navigate('/app/activities')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#059669] rounded-xl flex items-center justify-center shadow-sm">
                 <Calendar size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Agenda</span>
             </button>
-            {/* Annonces */}
             <button onClick={() => navigate('/app/announcements')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#EA580C] rounded-xl flex items-center justify-center shadow-sm">
                 <Bell size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Annonces</span>
             </button>
-            {/* Prière */}
             <button onClick={() => navigate('/app/prayer')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#E11D48] rounded-xl flex items-center justify-center shadow-sm">
                 <MessageSquare size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Prière</span>
             </button>
-            {/* Galerie */}
             <button onClick={() => navigate('/app/gallery')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#D9A05B] rounded-xl flex items-center justify-center shadow-sm">
                 <Sparkles size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Galerie</span>
             </button>
-            {/* Témoignages */}
             <button onClick={() => navigate('/app/testimonies')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
               <div className="w-12 h-12 bg-[#F59E0B] rounded-xl flex items-center justify-center shadow-sm">
                 <Sparkles size={24} className="text-white" />
               </div>
               <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Témoignages</span>
-            </button>
-            {/* Offline */}
-            <button onClick={() => navigate('/app/offline')} className="bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center gap-2 active:scale-95 transition-transform">
-              <div className="w-12 h-12 bg-[#10B981] rounded-xl flex items-center justify-center shadow-sm">
-                <CloudOff size={24} className="text-white" />
-              </div>
-              <span className="text-[#1E3A8A] dark:text-blue-400 font-bold text-[10px]">Offline</span>
             </button>
           </div>
         </div>
@@ -278,9 +214,6 @@ export default function Home() {
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">{weeklyTheme.reference}</p>
           <p className="text-slate-600 dark:text-slate-300 italic text-sm leading-relaxed mb-4">
             « {weeklyTheme.text.length > 120 ? weeklyTheme.text.substring(0, 120) + '...' : weeklyTheme.text} »
-          </p>
-          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-            {weeklyTheme.description.length > 150 ? weeklyTheme.description.substring(0, 150) + '...' : weeklyTheme.description}
           </p>
         </div>
 
@@ -366,4 +299,4 @@ export default function Home() {
       )}
     </div>
   );
-}
+              }
