@@ -28,7 +28,9 @@ export interface MemberProfile {
   email?: string;
   birthDate?: string;
   function: MemberFunction;
+  group: MemberGroup;
   role: 'admin' | 'member';
+  status: 'active' | 'pending' | 'blocked';
   photoUrl?: string;
   createdAt: string;
   updatedAt: string;
