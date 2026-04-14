@@ -77,6 +77,7 @@ export default function Auth() {
         gender: (form.gender === 'Homme' ? 'M' : 'F') as MemberGender,
         group: 'Jeunesse',
         function: 'Membre',
+        role: 'member',
         privacyAccepted: true,
         status: 'pending'
       });
@@ -103,6 +104,7 @@ export default function Auth() {
         gender: (form.gender === 'Homme' ? 'M' : 'F') as MemberGender,
         group: 'Jeunesse',
         function: 'Membre',
+        role: 'member',
         privacyAccepted: true,
         status: 'pending'
       });

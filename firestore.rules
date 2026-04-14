@@ -74,19 +74,16 @@ service cloud.firestore {
     }
 
     function isValidMember(data) {
-      return hasOnlyAllowedFields(['id', 'firstName', 'lastName', 'phone', 'gender', 'group', 'function', 'privacyAccepted', 'createdAt', 'updatedAt', 'role', 'status', 'photoUrl', 'joinDate', 'birthDate']) &&
-             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 50 &&
-             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 50 &&
-             data.phone is string && data.phone.size() >= 0 && data.phone.size() < 20 &&
+      return hasOnlyAllowedFields(['id', 'firstName', 'lastName', 'phone', 'gender', 'group', 'function', 'privacyAccepted', 'createdAt', 'updatedAt', 'role', 'status', 'photoUrl', 'joinDate', 'birthDate', 'email', 'favoriteMeditations']) &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 100 &&
+             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 100 &&
              data.role in ['admin', 'member'] &&
              data.status in ['active', 'pending', 'blocked'];
     }
 
-    function isValidTestimony(data) {
-      return hasOnlyAllowedFields(['author', 'title', 'content', 'date', 'category', 'likes', 'isAnonymous', 'status', 'userId']) &&
-             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
-             data.status in ['pending', 'approved', 'rejected'];
+    function isValidArchiveArticle(data) {
+      return hasOnlyAllowedFields(['title', 'date', 'content', 'summary', 'imageUrl', 'category']) &&
+             data.title is string && data.content is string;
     }
 
     // ===============================================================
@@ -100,7 +97,7 @@ service cloud.firestore {
 
     match /announcements/{id} {
       allow read: if true;
-      allow write: if isAdmin() && isValidAnnouncement(request.resource.data);
+      allow write: if isAdmin();
     }
 
     match /activities/{id} {
@@ -109,24 +106,70 @@ service cloud.firestore {
     }
 
     match /prayers/{id} {
-      allow read: if true; // Publicly readable for the community to pray
-      allow create: if isAuthenticated() && isValidPrayer(request.resource.data) && request.resource.data.userId == request.auth.uid;
-      allow update: if (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes']))) && isValidPrayer(request.resource.data);
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes'])));
       allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 
     match /testimonies/{id} {
       allow read: if true;
-      allow create: if isAuthenticated() && isValidTestimony(request.resource.data) && request.resource.data.userId == request.auth.uid;
-      allow update: if (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes']))) && isValidTestimony(request.resource.data);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes'])));
       allow delete: if isAdmin() || isOwner(resource.data.userId);
     }
 
     match /members/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isAdmin() || (isAuthenticated() && isOwner(userId) && isValidMember(request.resource.data) && request.resource.data.role == 'member');
-      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role && areImmutableFieldsUnchanged(['joinDate', 'id']));
+      allow create: if isAdmin() || (isAuthenticated() && isOwner(userId) && request.resource.data.role == 'member');
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
       allow delete: if isAdmin();
+    }
+
+    match /history/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /bureaus/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /reports/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /historicalPhotos/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /timelineEvents/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /archiveAudios/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /archiveContributions/{id} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    match /archiveArticles/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /audios/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /contributionCategories/{id} {

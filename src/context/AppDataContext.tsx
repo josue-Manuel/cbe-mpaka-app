@@ -608,6 +608,44 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setCantiques(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Cantique)));
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'cantiques'));
 
+    const unsubHistory = onSnapshot(doc(db, 'history', 'current'), (docSnap) => {
+      if (docSnap.exists()) {
+        setHistory(docSnap.data() as HistoryEntry);
+      }
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'history'));
+
+    const unsubBureaus = onSnapshot(collection(db, 'bureaus'), (snapshot) => {
+      setBureaus(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Bureau)));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'bureaus'));
+
+    const unsubReports = onSnapshot(collection(db, 'reports'), (snapshot) => {
+      setReports(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ArchiveReport)));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'reports'));
+
+    const unsubHistoricalPhotos = onSnapshot(collection(db, 'historicalPhotos'), (snapshot) => {
+      setHistoricalPhotos(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HistoricalPhoto)));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'historicalPhotos'));
+
+    const unsubTimelineEvents = onSnapshot(collection(db, 'timelineEvents'), (snapshot) => {
+      setTimelineEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TimelineEvent)));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'timelineEvents'));
+
+    const unsubArchiveAudios = onSnapshot(collection(db, 'archiveAudios'), (snapshot) => {
+      setArchiveAudios(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ArchiveAudio)));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'archiveAudios'));
+
+    const unsubArchiveContributions = onSnapshot(collection(db, 'archiveContributions'), (snapshot) => {
+      setArchiveContributions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ArchiveContribution)));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'archiveContributions'));
+
+    const unsubArchiveArticles = onSnapshot(collection(db, 'archiveArticles'), (snapshot) => {
+      setArchiveArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ArchiveArticle)));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'archiveArticles'));
+
+    const unsubAudios = onSnapshot(collection(db, 'audios'), (snapshot) => {
+      setAudios(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AudioMessage)));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, 'audios'));
+
     let unsubContactMessages: () => void = () => {};
 
     const unsubLeaderMessage = onSnapshot(doc(db, 'leaderMessage', 'current'), (docSnap) => {
@@ -713,6 +751,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       unsubGalleryEvents();
       unsubBureauMembers();
       unsubCantiques();
+      unsubHistory();
+      unsubBureaus();
+      unsubReports();
+      unsubHistoricalPhotos();
+      unsubTimelineEvents();
+      unsubArchiveAudios();
+      unsubArchiveContributions();
+      unsubArchiveArticles();
+      unsubAudios();
       unsubContactMessages();
       unsubLeaderMessage();
       unsubAboutInfo();
@@ -941,38 +988,146 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateHistory = (h: HistoryEntry) => setHistory(h);
-
-  const addBureau = (b: Omit<Bureau, 'id'>) => setBureaus([...bureaus, { ...b, id: generateId() }]);
-  const updateBureau = (id: string, b: Partial<Bureau>) => setBureaus(bureaus.map(item => item.id === id ? { ...item, ...b } : item));
-  const deleteBureau = (id: string) => setBureaus(bureaus.filter(b => b.id !== id));
-
-  const addReport = (r: Omit<ArchiveReport, 'id'>) => setReports([...reports, { ...r, id: generateId() }]);
-  const updateReport = (id: string, r: Partial<ArchiveReport>) => setReports(reports.map(item => item.id === id ? { ...item, ...r } : item));
-  const deleteReport = (id: string) => setReports(reports.filter(r => r.id !== id));
-
-  const addHistoricalPhoto = (p: Omit<HistoricalPhoto, 'id'>) => setHistoricalPhotos([...historicalPhotos, { ...p, id: generateId() }]);
-  const updateHistoricalPhoto = (id: string, p: Partial<HistoricalPhoto>) => setHistoricalPhotos(historicalPhotos.map(item => item.id === id ? { ...item, ...p } : item));
-  const deleteHistoricalPhoto = (id: string) => setHistoricalPhotos(historicalPhotos.filter(p => p.id !== id));
-
-  const addTimelineEvent = (e: Omit<TimelineEvent, 'id'>) => setTimelineEvents([...timelineEvents, { ...e, id: generateId() }]);
-  const updateTimelineEvent = (id: string, e: Partial<TimelineEvent>) => setTimelineEvents(timelineEvents.map(item => item.id === id ? { ...item, ...e } : item));
-  const deleteTimelineEvent = (id: string) => setTimelineEvents(timelineEvents.filter(e => e.id !== id));
-
-  const addArchiveAudio = (a: Omit<ArchiveAudio, 'id'>) => setArchiveAudios([{ ...a, id: generateId() }, ...archiveAudios]);
-  const updateArchiveAudio = (id: string, a: Partial<ArchiveAudio>) => setArchiveAudios(archiveAudios.map(item => item.id === id ? { ...item, ...a } : item));
-  const deleteArchiveAudio = (id: string) => setArchiveAudios(archiveAudios.filter(a => a.id !== id));
-
-  const addArchiveContribution = (c: Omit<ArchiveContribution, 'id' | 'status'>) => setArchiveContributions([{ ...c, id: generateId(), status: 'pending' }, ...archiveContributions]);
-  const approveArchiveContribution = (id: string) => {
-    const contribution = archiveContributions.find(c => c.id === id);
-    if (!contribution) return;
-
-    // Logic to move to respective category could be added here if needed
-    // For now just mark as approved
-    setArchiveContributions(archiveContributions.map(c => c.id === id ? { ...c, status: 'approved' } : c));
+  const updateHistory = async (h: HistoryEntry) => {
+    try {
+      await setDoc(doc(db, 'history', 'current'), h);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'history');
+    }
   };
-  const deleteArchiveContribution = (id: string) => setArchiveContributions(archiveContributions.filter(c => c.id !== id));
+
+  const addBureau = async (b: Omit<Bureau, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'bureaus'), b);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'bureaus');
+    }
+  };
+  const updateBureau = async (id: string, b: Partial<Bureau>) => {
+    try {
+      await updateDoc(doc(db, 'bureaus', id), b);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'bureaus');
+    }
+  };
+  const deleteBureau = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'bureaus', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'bureaus');
+    }
+  };
+
+  const addReport = async (r: Omit<ArchiveReport, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'reports'), r);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'reports');
+    }
+  };
+  const updateReport = async (id: string, r: Partial<ArchiveReport>) => {
+    try {
+      await updateDoc(doc(db, 'reports', id), r);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'reports');
+    }
+  };
+  const deleteReport = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'reports', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'reports');
+    }
+  };
+
+  const addHistoricalPhoto = async (p: Omit<HistoricalPhoto, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'historicalPhotos'), p);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'historicalPhotos');
+    }
+  };
+  const updateHistoricalPhoto = async (id: string, p: Partial<HistoricalPhoto>) => {
+    try {
+      await updateDoc(doc(db, 'historicalPhotos', id), p);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'historicalPhotos');
+    }
+  };
+  const deleteHistoricalPhoto = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'historicalPhotos', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'historicalPhotos');
+    }
+  };
+
+  const addTimelineEvent = async (e: Omit<TimelineEvent, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'timelineEvents'), e);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'timelineEvents');
+    }
+  };
+  const updateTimelineEvent = async (id: string, e: Partial<TimelineEvent>) => {
+    try {
+      await updateDoc(doc(db, 'timelineEvents', id), e);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'timelineEvents');
+    }
+  };
+  const deleteTimelineEvent = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'timelineEvents', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'timelineEvents');
+    }
+  };
+
+  const addArchiveAudio = async (a: Omit<ArchiveAudio, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'archiveAudios'), a);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'archiveAudios');
+    }
+  };
+  const updateArchiveAudio = async (id: string, a: Partial<ArchiveAudio>) => {
+    try {
+      await updateDoc(doc(db, 'archiveAudios', id), a);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'archiveAudios');
+    }
+  };
+  const deleteArchiveAudio = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'archiveAudios', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'archiveAudios');
+    }
+  };
+
+  const addArchiveContribution = async (c: Omit<ArchiveContribution, 'id' | 'status'>) => {
+    try {
+      await addDoc(collection(db, 'archiveContributions'), { ...c, status: 'pending' });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'archiveContributions');
+    }
+  };
+  const approveArchiveContribution = async (id: string) => {
+    try {
+      await updateDoc(doc(db, 'archiveContributions', id), { status: 'approved' });
+      addLog('Archive', `Approbation de la contribution : ${id}`, 'success');
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'archiveContributions');
+    }
+  };
+  const deleteArchiveContribution = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'archiveContributions', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'archiveContributions');
+    }
+  };
 
   const updateAboutInfo = async (info: Partial<AboutInfo>) => {
     try {
@@ -1038,9 +1193,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addArchiveArticle = (a: Omit<ArchiveArticle, 'id'>) => setArchiveArticles([{ ...a, id: generateId() }, ...archiveArticles]);
-  const updateArchiveArticle = (id: string, a: Partial<ArchiveArticle>) => setArchiveArticles(archiveArticles.map(item => item.id === id ? { ...item, ...a } : item));
-  const deleteArchiveArticle = (id: string) => setArchiveArticles(archiveArticles.filter(a => a.id !== id));
+  const addArchiveArticle = async (a: Omit<ArchiveArticle, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'archiveArticles'), a);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'archiveArticles');
+    }
+  };
+  const updateArchiveArticle = async (id: string, a: Partial<ArchiveArticle>) => {
+    try {
+      await updateDoc(doc(db, 'archiveArticles', id), a);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'archiveArticles');
+    }
+  };
+  const deleteArchiveArticle = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'archiveArticles', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'archiveArticles');
+    }
+  };
 
   const addMeditation = async (m: Omit<DailyMeditation, 'id'>) => {
     try {
@@ -1149,9 +1322,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addAudio = (a: Omit<AudioMessage, 'id'>) => setAudios([{ ...a, id: generateId() }, ...audios]);
-  const updateAudio = (id: string, a: Partial<AudioMessage>) => setAudios(audios.map(item => item.id === id ? { ...item, ...a } : item));
-  const deleteAudio = (id: string) => setAudios(audios.filter(a => a.id !== id));
+  const addAudio = async (a: Omit<AudioMessage, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'audios'), a);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'audios');
+    }
+  };
+  const updateAudio = async (id: string, a: Partial<AudioMessage>) => {
+    try {
+      await updateDoc(doc(db, 'audios', id), a);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'audios');
+    }
+  };
+  const deleteAudio = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'audios', id));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'audios');
+    }
+  };
 
   const addBureauMember = async (b: Omit<BureauMember, 'id'>) => {
     try {

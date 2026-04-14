@@ -1,7 +1,7 @@
 import { 
   ChevronLeft, ShieldAlert, Lock, KeyRound, LogOut, 
   Users, Bell, Calendar, MessageSquare, Heart, Phone, Mail,
-  Plus, AlertTriangle, Clock, MapPin, ChevronRight, Check, X, Image as ImageIcon, Upload, Wallet, FileText, Wand2,
+  Plus, AlertTriangle, Clock, MapPin, ChevronRight, Check, X, Image as ImageIcon, Upload, Wallet, FileText, Wand2, LogIn,
   BookOpen, Sparkles, Headphones, Archive, Briefcase, Settings, Trash2, Edit2, UserCheck, UserX, Shield, Edit3, Music, Globe, Info, Target,
   Search, Filter, Download, Activity as ActivityIcon, TrendingUp, PieChart, BarChart3, Wifi, WifiOff, Zap, Bot
 } from 'lucide-react';
@@ -18,7 +18,7 @@ import { AdminAssistant } from '../components/AdminAssistant';
 
 export default function Admin() {
   const navigate = useNavigate();
-  const { isAdmin, login, logout } = useProfile();
+  const { isAdmin, login, logout, loginWithEmail } = useProfile();
   const { addNotification } = useNotification();
   const { 
     announcements, prayers, activities, testimonies, approveTestimony, deleteTestimony, 
@@ -193,9 +193,35 @@ export default function Admin() {
     addLog('Exportation', `Exportation de ${filename} au format CSV`, 'info');
   };
 
+  const [showEmailLogin, setShowEmailLogin] = useState(false);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
-    await login();
+    try {
+      setIsLoggingIn(true);
+      await login();
+    } catch (error) {
+      console.error("Login error", error);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleEmailLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!adminEmail || !adminPassword) return;
+    try {
+      setIsLoggingIn(true);
+      await loginWithEmail(adminEmail, adminPassword);
+    } catch (error) {
+      console.error("Email login error", error);
+      setError(true);
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   if (!isAdmin) {
@@ -223,13 +249,80 @@ export default function Admin() {
             Cette zone est réservée aux administrateurs de la Sous-section CBE Mpaka.
           </p>
 
-            <button 
-              onClick={handleLogin}
-              className="w-full bg-white dark:bg-slate-800 text-slate-800 dark:text-white py-4 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg border border-slate-200 dark:border-slate-700"
-            >
-              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/layout/google.svg" alt="Google" className="w-5 h-5" />
-              Se connecter avec Google
-            </button>
+          <div className="w-full max-w-xs space-y-4">
+            {!showEmailLogin ? (
+              <>
+                <button 
+                  onClick={handleLogin}
+                  disabled={isLoggingIn}
+                  className="w-full bg-white dark:bg-slate-800 text-slate-800 dark:text-white py-4 rounded-xl font-bold flex items-center justify-center gap-3 active:scale-95 transition-all shadow-lg border border-slate-200 dark:border-slate-700 disabled:opacity-50"
+                >
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/layout/google.svg" alt="Google" className="w-5 h-5" />
+                  Se connecter avec Google
+                </button>
+                
+                <button 
+                  onClick={() => setShowEmailLogin(true)}
+                  className="w-full text-slate-500 dark:text-slate-400 text-xs font-bold py-2 hover:text-blue-600 transition-colors"
+                >
+                  Utiliser un email et mot de passe
+                </button>
+              </>
+            ) : (
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                      type="email" 
+                      value={adminEmail}
+                      onChange={(e) => setAdminEmail(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:border-blue-500 transition-colors"
+                      placeholder="admin@example.com"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase ml-1">Mot de passe</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                      type="password" 
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:border-blue-500 transition-colors"
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <p className="text-red-500 text-[10px] font-bold text-center">Identifiants incorrects ou accès refusé.</p>
+                )}
+
+                <button 
+                  type="submit"
+                  disabled={isLoggingIn}
+                  className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                >
+                  {isLoggingIn ? <Clock className="animate-spin" size={18} /> : <LogIn size={18} />}
+                  Se connecter
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={() => setShowEmailLogin(false)}
+                  className="w-full text-slate-500 dark:text-slate-400 text-xs font-bold py-2"
+                >
+                  Retour aux options
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -291,7 +384,7 @@ export default function Admin() {
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {member.email} • {member.phone}
-                {member.birthDate && ` • Né(e) le ${new Date(member.birthDate).toLocaleDateString('fr-FR')}`}
+                {member.birthDate && !isNaN(new Date(member.birthDate).getTime()) && ` • Né(e) le ${new Date(member.birthDate).toLocaleDateString('fr-FR')}`}
               </p>
               <div className="mt-2 flex gap-2">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase ${member.status === 'active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : member.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
