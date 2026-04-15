@@ -677,14 +677,14 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         try {
           const docRef = doc(db, 'members', user.uid);
           const docSnap = await getDoc(docRef);
-          if (docSnap.exists() && docSnap.data().role === 'admin' || user.email === 'josuemanueljsm@gmail.com') {
+          if ((docSnap.exists() && docSnap.data().role === 'admin') || (user.email === 'josuemanueljsm@gmail.com' && user.emailVerified)) {
             isAdmin = true;
           }
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           if (msg.includes('offline')) {
             console.warn("Offline: Could not verify admin status from server, using email fallback.");
-            if (user.email === 'josuemanueljsm@gmail.com') isAdmin = true;
+            if (user.email === 'josuemanueljsm@gmail.com' && user.emailVerified) isAdmin = true;
           } else {
             console.error("Error checking admin status", e);
           }

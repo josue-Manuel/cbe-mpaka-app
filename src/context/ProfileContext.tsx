@@ -53,13 +53,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           if (profileDoc.exists()) {
             const profileData = profileDoc.data() as MemberProfile;
             setProfile(profileData);
-            setIsAdmin(profileData.role === 'admin' || currentUser.email === 'josuemanueljsm@gmail.com');
+            setIsAdmin(profileData.role === 'admin' || (currentUser.email === 'josuemanueljsm@gmail.com' && currentUser.emailVerified));
           } else {
             // Only set profile to null if we are sure it doesn't exist (online check)
             // If we are offline and it's not in cache, exists() will be false
             // but we might want to wait or show a different state.
             setProfile(null);
-            setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com');
+            setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com' && currentUser.emailVerified);
           }
         } catch (error) {
           const msg = error instanceof Error ? error.message : String(error);
@@ -83,12 +83,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const login = async () => {
     try {
-      if (Capacitor.isNativePlatform()) {
-        const { signInWithGoogleRedirect } = await import('../firebase');
-        await signInWithGoogleRedirect();
-      } else {
-        await signInWithGoogle();
-      }
+      const { signInWithGoogle } = await import('../firebase');
+      await signInWithGoogle();
     } catch (error) {
       console.error("Login error:", error);
       throw error;

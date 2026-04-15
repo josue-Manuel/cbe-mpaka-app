@@ -2,12 +2,10 @@ import { useState, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Camera, Save, ChevronLeft, ShieldCheck, X, Mail, Calendar } from 'lucide-react';
 import { useProfile } from '../context/ProfileContext';
-import { useAppData } from '../context/AppDataContext';
 import { MemberFunction, MemberGender } from '../types/profile';
 
 export default function ProfileEdit() {
   const { profile, createProfile, updateProfile } = useProfile();
-  const { addMember, updateMember, members } = useAppData();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -49,32 +47,12 @@ export default function ProfileEdit() {
     }
 
     setIsLoading(true);
-    
-    // Sync with AppDataContext members for admin dashboard
-    const memberData = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      birthDate: formData.birthDate,
-      status: 'active' as const,
-      role: 'user' as const,
-      joinDate: new Date().toISOString().split('T')[0]
-    };
 
     setTimeout(() => {
       if (profile) {
         updateProfile(formData);
-        // Update existing member in AppData if found by email or name
-        const existingMember = members.find(m => m.email === profile.email || (m.firstName === profile.firstName && m.lastName === profile.lastName));
-        if (existingMember) {
-          updateMember(existingMember.id, memberData);
-        } else {
-          addMember(memberData);
-        }
       } else {
         createProfile(formData);
-        addMember(memberData);
       }
       setIsLoading(false);
       navigate('/app/profile');

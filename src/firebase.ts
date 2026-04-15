@@ -12,6 +12,7 @@ import {
   signInWithEmailAndPassword,
   updateProfile as updateAuthProfile,
   setPersistence,
+  indexedDBLocalPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, addDoc, serverTimestamp, Timestamp, getDocFromServer, enableIndexedDbPersistence } from 'firebase/firestore';
@@ -63,7 +64,12 @@ async function testConnection() {
 testConnection();
 
 // Set persistence explicitly
-setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence error:", err));
+setPersistence(auth, indexedDBLocalPersistence)
+  .catch(() => {
+    // Fallback to browserLocalPersistence if indexedDB is not supported
+    return setPersistence(auth, browserLocalPersistence);
+  })
+  .catch(err => console.error("Persistence error:", err));
 
 export const googleProvider = new GoogleAuthProvider();
 
@@ -130,10 +136,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   }
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   
-  // Don't throw for permission denied errors to prevent app crashes
-  if (!errorMessage.toLowerCase().includes('permission')) {
-    throw new Error(JSON.stringify(errInfo));
-  }
+  // We log the error but do not throw it to prevent Uncaught Errors from crashing the app.
+  // The application should handle missing data gracefully.
 }
 
 export { 

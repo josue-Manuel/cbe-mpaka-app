@@ -8,8 +8,8 @@ export default function Auth() {
   const { createProfile, login, loginWithEmail, registerWithEmail, user, profile, isLoading } = useProfile();
   const navigate = useNavigate();
   
-  const [authMode, setAuthMode] = useState<'choice' | 'email_login' | 'email_register' | 'profile_setup'>('choice');
-  
+  const [authMode, setAuthMode] = useState<'choice' | 'email_login' | 'email_register' | 'profile_setup' | 'offline_waiting'>('choice');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
@@ -31,10 +31,7 @@ export default function Auth() {
         setAuthMode('profile_setup');
       } else {
         // Offline and profile not in cache. 
-        // We can't do much, but let's not force setup.
-        // Maybe the user can still access some parts of the app?
-        // For now, let's just wait or show a message.
-        console.log("Offline and profile missing from cache. Waiting for connection.");
+        setAuthMode('offline_waiting');
       }
     }
   }, [user, profile, isLoading, navigate]);
@@ -361,6 +358,27 @@ export default function Auth() {
     </div>
   );
 
+  const renderOfflineWaiting = () => (
+    <div className="space-y-6 flex flex-col items-center justify-center py-10">
+      <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center mb-4">
+        <UserIcon size={32} className="text-orange-600 dark:text-orange-400" />
+      </div>
+      <h1 className="text-2xl font-bold text-slate-800 dark:text-white text-center">Mode Hors Ligne</h1>
+      <p className="text-slate-500 dark:text-slate-400 text-center">
+        Vous êtes connecté, mais nous n'avons pas pu charger votre profil car vous êtes hors ligne.
+      </p>
+      <p className="text-slate-500 dark:text-slate-400 text-center">
+        Veuillez vous connecter à Internet pour continuer.
+      </p>
+      <button 
+        onClick={() => window.location.reload()}
+        className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold shadow-md shadow-blue-500/30 active:scale-95 transition-transform"
+      >
+        Réessayer
+      </button>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 flex flex-col justify-center p-6">
       <div className="w-full max-w-md mx-auto">
@@ -368,6 +386,7 @@ export default function Auth() {
         {authMode === 'email_login' && renderEmailLogin()}
         {authMode === 'email_register' && renderEmailRegister()}
         {authMode === 'profile_setup' && renderProfileSetup()}
+        {authMode === 'offline_waiting' && renderOfflineWaiting()}
       </div>
     </div>
   );
