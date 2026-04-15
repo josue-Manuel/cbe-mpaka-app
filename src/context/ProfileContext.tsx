@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { MemberProfile } from '../types/profile';
-import { auth, signInWithGoogle, signInWithGoogleRedirect, getGoogleRedirectResult, logout, onAuthStateChanged, db, doc, getDoc, setDoc, updateDoc, User } from '../firebase';
+import { auth, signInWithGoogle, signInWithGoogleRedirect, getGoogleRedirectResult, logout, onAuthStateChanged, db, doc, getDoc, setDoc, updateDoc, User, onSnapshot } from '../firebase';
 import { Capacitor } from '@capacitor/core';
 
 interface ProfileContextType {
@@ -48,37 +48,53 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       if (currentUser) {
         // Fetch profile from Firestore
         try {
-          // Use getDoc which will use cache if offline and persistence is enabled
-          const profileDoc = await getDoc(doc(db, 'members', currentUser.uid));
-          if (profileDoc.exists()) {
-            const profileData = profileDoc.data() as MemberProfile;
-            setProfile(profileData);
-            setIsAdmin(profileData.role === 'admin' || (currentUser.email === 'josuemanueljsm@gmail.com' && currentUser.emailVerified));
-          } else {
-            // Only set profile to null if we are sure it doesn't exist (online check)
-            // If we are offline and it's not in cache, exists() will be false
-            // but we might want to wait or show a different state.
-            setProfile(null);
-            setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com' && currentUser.emailVerified);
-          }
+          // Listen to profile changes in real-time
+          const unsubscribeProfile = onSnapshot(
+            doc(db, 'members', currentUser.uid),
+            (profileDoc) => {
+              if (profileDoc.exists()) {
+                const profileData = profileDoc.data() as MemberProfile;
+                setProfile(profileData);
+                setIsAdmin(profileData.role === 'admin' || (currentUser.email === 'josuemanueljsm@gmail.com' && currentUser.emailVerified));
+              } else {
+                setProfile(null);
+                setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com' && currentUser.emailVerified);
+              }
+              setIsLoading(false);
+            },
+            (error) => {
+              const msg = error instanceof Error ? error.message : String(error);
+              if (msg.includes('offline')) {
+                console.warn("Firestore is offline, using cached profile if available.");
+              } else {
+                console.error("Error fetching profile:", error);
+              }
+              setIsLoading(false);
+            }
+          );
+          
+          // Store the unsubscribe function to clean up when auth state changes
+          (window as any)._unsubscribeProfile = unsubscribeProfile;
         } catch (error) {
-          const msg = error instanceof Error ? error.message : String(error);
-          if (msg.includes('offline')) {
-            console.warn("Firestore is offline, using cached profile if available.");
-            // If we have a cached version, getDoc should have returned it.
-            // If it didn't, we stay in the current state (profile null) but maybe we shouldn't redirect to setup.
-          } else {
-            console.error("Error fetching profile:", error);
-          }
+          console.error("Error setting up profile listener:", error);
+          setIsLoading(false);
         }
       } else {
         setProfile(null);
         setIsAdmin(false);
+        setIsLoading(false);
+        if ((window as any)._unsubscribeProfile) {
+          (window as any)._unsubscribeProfile();
+        }
       }
-      setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if ((window as any)._unsubscribeProfile) {
+        (window as any)._unsubscribeProfile();
+      }
+    };
   }, []);
 
   const login = async () => {
@@ -116,6 +132,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const newProfile: MemberProfile = {
         ...profileData,
         id: newUser.uid,
+        email: email,
         status: 'pending', // IMPORTANT: Required by security rules
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -140,8 +157,12 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const createProfile = async (data: Omit<MemberProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (!user) return;
     const newProfile: MemberProfile = {
+      group: 'Jeunesse', // Default group
+      role: 'member', // Default role
       ...data,
       id: user.uid,
+      email: data.email || user.email || undefined,
+      photoUrl: data.photoUrl || user.photoURL || undefined,
       status: 'pending', // IMPORTANT: Required by security rules
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

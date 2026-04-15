@@ -46,6 +46,8 @@ export default function Auth() {
         alert("Erreur : Ce domaine n'est pas autorisé dans la console Firebase. Veuillez ajouter '" + window.location.hostname + "' aux domaines autorisés dans Authentication > Settings > Authorized domains.");
       } else if (error.code === 'auth/popup-closed-by-user') {
         // Ignore user closing popup
+      } else if (error.message?.includes('localhost') || error.code === 'auth/network-request-failed') {
+        alert("Attention : La connexion avec Google sur l'application Android nécessite une configuration avancée. Si cela échoue, veuillez utiliser la connexion par Email.");
       } else {
         alert("Erreur Google : " + (error.message || "Impossible d'ouvrir la page de connexion."));
       }

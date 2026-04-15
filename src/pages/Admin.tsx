@@ -394,10 +394,13 @@ export default function Admin() {
             </div>
             <div className="flex gap-2">
               {member.status === 'pending' && (
-                <button onClick={() => { updateMember(member.id, { status: 'active' }); addNotification('Membre Approuvé', `${member.firstName} ${member.lastName} est maintenant actif.`, 'success'); }} className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center active:scale-95"><UserCheck size={16} /></button>
+                <button onClick={() => { updateMember(member.id, { status: 'active' }); addNotification('Membre Approuvé', `${member.firstName} ${member.lastName} est maintenant actif.`, 'success'); }} className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center active:scale-95" title="Approuver"><UserCheck size={16} /></button>
               )}
               {member.status === 'active' && (
-                <button onClick={() => { updateMember(member.id, { status: 'blocked' }); addNotification('Membre Bloqué', `${member.firstName} ${member.lastName} a été bloqué.`, 'warning'); }} className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center active:scale-95"><UserX size={16} /></button>
+                <button onClick={() => { updateMember(member.id, { status: 'blocked' }); addNotification('Membre Bloqué', `${member.firstName} ${member.lastName} a été bloqué.`, 'warning'); }} className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center active:scale-95" title="Bloquer"><UserX size={16} /></button>
+              )}
+              {member.status === 'blocked' && (
+                <button onClick={() => { updateMember(member.id, { status: 'active' }); addNotification('Membre Débloqué', `${member.firstName} ${member.lastName} a été débloqué.`, 'success'); }} className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center active:scale-95" title="Débloquer"><UserCheck size={16} /></button>
               )}
               <button 
                 onClick={() => {

@@ -74,7 +74,21 @@ setPersistence(auth, indexedDBLocalPersistence)
 export const googleProvider = new GoogleAuthProvider();
 
 // Auth helpers
-export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
+export const signInWithGoogle = () => {
+  // Check if running as a PWA (installed on home screen)
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+  
+  if (isPWA) {
+    // PWAs handle redirects better than popups
+    return signInWithRedirect(auth, googleProvider);
+  }
+  
+  // For web browsers and AI Studio iframe, use popup
+  // Note: Capacitor (APK) will also use popup, which might have issues, 
+  // but redirect is guaranteed to fail with "localhost blocked" without native plugins.
+  return signInWithPopup(auth, googleProvider);
+};
+
 export const signInWithGoogleRedirect = () => signInWithRedirect(auth, googleProvider);
 export const getGoogleRedirectResult = () => getRedirectResult(auth);
 export const logout = () => signOut(auth);

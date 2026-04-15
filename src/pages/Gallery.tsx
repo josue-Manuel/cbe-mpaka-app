@@ -1,17 +1,39 @@
-import { useState, useMemo } from 'react';
-import { ChevronLeft, Menu, Image as ImageIcon, Video, X, Heart, Download, Sparkles, Calendar, Share2 } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { ChevronLeft, Menu, Image as ImageIcon, Video, X, Heart, Download, Sparkles, Calendar, Share2, Users } from 'lucide-react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { useAppData, GalleryEvent, GalleryMedia } from '../context/AppDataContext';
+import { useProfile } from '../context/ProfileContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Gallery() {
   const navigate = useNavigate();
   const { setIsSidebarOpen } = useOutletContext<{ setIsSidebarOpen: (isOpen: boolean) => void }>();
-  const { galleryEvents, likeMedia } = useAppData();
+  const { galleryEvents, likeMedia, members } = useAppData();
+  const { user } = useProfile();
   
   const [selectedEvent, setSelectedEvent] = useState<GalleryEvent | null>(null);
   const [lightboxMedia, setLightboxMedia] = useState<GalleryMedia | null>(null);
   const [selectedYear, setSelectedYear] = useState<string>('Tous');
+  const [showLikers, setShowLikers] = useState<boolean>(false);
+
+  // Sync state with real-time updates
+  useEffect(() => {
+    if (selectedEvent) {
+      const updatedEvent = galleryEvents.find(e => e.id === selectedEvent.id);
+      if (updatedEvent) {
+        setSelectedEvent(updatedEvent);
+        if (lightboxMedia) {
+          const updatedMedia = updatedEvent.media.find(m => m.id === lightboxMedia.id);
+          if (updatedMedia) {
+            setLightboxMedia(updatedMedia);
+          }
+        }
+      } else {
+        setSelectedEvent(null);
+        setLightboxMedia(null);
+      }
+    }
+  }, [galleryEvents]);
 
   const handleDownload = (url: string) => {
     window.open(url, '_blank');
@@ -246,13 +268,25 @@ export default function Gallery() {
             {/* Lightbox Footer */}
             <div className="p-6 bg-gradient-to-t from-black/90 to-transparent absolute bottom-0 left-0 right-0">
               <div className="flex items-center justify-between">
-                <button 
-                  onClick={() => likeMedia(selectedEvent.id, lightboxMedia.id)}
-                  className="flex items-center gap-2 text-white bg-white/10 px-4 py-2 rounded-full active:scale-95 transition-transform"
-                >
-                  <Heart size={20} className={lightboxMedia.likes > 0 ? "fill-[#E11D48] text-[#E11D48]" : ""} />
-                  <span className="font-medium">Amen 🙏 ({lightboxMedia.likes})</span>
-                </button>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => user && likeMedia(selectedEvent.id, lightboxMedia.id, user.uid)}
+                    className="flex items-center gap-2 text-white bg-white/10 px-4 py-2 rounded-full active:scale-95 transition-transform"
+                  >
+                    <Heart size={20} className={lightboxMedia.likedBy?.includes(user?.uid || '') ? "fill-[#E11D48] text-[#E11D48]" : ""} />
+                    <span className="font-medium">Amen 🙏 ({lightboxMedia.likedBy?.length || lightboxMedia.likes || 0})</span>
+                  </button>
+                  
+                  {lightboxMedia.likedBy && lightboxMedia.likedBy.length > 0 && (
+                    <button 
+                      onClick={() => setShowLikers(true)}
+                      className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white active:scale-95 transition-transform"
+                    >
+                      <Users size={18} />
+                    </button>
+                  )}
+                </div>
+
                 <div className="flex flex-col items-end">
                   <p className="text-white/50 text-xs italic">CBE Dieu le veut !</p>
                   <p className="text-white/30 text-[10px] mt-1">
@@ -261,6 +295,40 @@ export default function Gallery() {
                 </div>
               </div>
             </div>
+            
+            {/* Likers Modal */}
+            <AnimatePresence>
+              {showLikers && lightboxMedia && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="absolute bottom-24 left-6 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-2xl w-64 max-h-64 overflow-y-auto z-50"
+                >
+                  <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-700 pb-2">
+                    <h4 className="font-bold text-slate-800 dark:text-white text-sm">Ils ont dit Amen</h4>
+                    <button onClick={() => setShowLikers(false)} className="text-slate-400 hover:text-slate-600">
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {lightboxMedia.likedBy?.map(uid => {
+                      const member = members.find(m => m.id === uid);
+                      return (
+                        <div key={uid} className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 text-[10px] font-bold">
+                            {member ? member.firstName.charAt(0) : '?'}
+                          </div>
+                          <span className="text-sm text-slate-700 dark:text-slate-300">
+                            {member ? `${member.firstName} ${member.lastName}` : 'Utilisateur inconnu'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>

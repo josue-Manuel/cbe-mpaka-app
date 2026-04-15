@@ -48,15 +48,19 @@ export default function ProfileEdit() {
 
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
       if (profile) {
-        updateProfile(formData);
+        await updateProfile(formData);
       } else {
-        createProfile(formData);
+        await createProfile(formData);
       }
-      setIsLoading(false);
       navigate('/app/profile');
-    }, 800);
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      alert("Une erreur est survenue lors de l'enregistrement du profil.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

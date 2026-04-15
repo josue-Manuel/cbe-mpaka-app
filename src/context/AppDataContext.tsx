@@ -18,7 +18,7 @@ export type Testimony = {
   isAnonymous: boolean;
   status: 'pending' | 'approved' 
 };
-export type GalleryMedia = { id: string; type: 'photo' | 'video'; url: string; likes: number };
+export type GalleryMedia = { id: string; type: 'photo' | 'video'; url: string; likes: number; likedBy?: string[] };
 export type GalleryEvent = { id: string; title: string; date: string; location: string; media: GalleryMedia[] };
 export type ContributionCategory = { id: string; name: string; description: string; targetAmount?: number };
 export type ContributionRecord = { id: string; categoryId: string; memberName: string; amount: number; date: string };
@@ -94,7 +94,7 @@ interface AppDataContextType {
   addGalleryEvent: (e: Omit<GalleryEvent, 'id' | 'media'>) => void;
   updateGalleryEvent: (id: string, e: Partial<GalleryEvent>) => void;
   addMediaToEvent: (eventId: string, media: Omit<GalleryMedia, 'id' | 'likes'>) => void;
-  likeMedia: (eventId: string, mediaId: string) => void;
+  likeMedia: (eventId: string, mediaId: string, userId: string) => void;
   deleteGalleryEvent: (eventId: string) => void;
   deleteMediaFromEvent: (eventId: string, mediaId: string) => void;
 
@@ -985,11 +985,35 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const likeMedia = async (eventId: string, mediaId: string) => {
+  const likeMedia = async (eventId: string, mediaId: string, userId: string) => {
     try {
       const event = galleryEvents.find(e => e.id === eventId);
       if (!event) return;
-      const updatedMedia = event.media.map(m => m.id === mediaId ? { ...m, likes: m.likes + 1 } : m);
+      
+      const updatedMedia = event.media.map(m => {
+        if (m.id === mediaId) {
+          const likedBy = m.likedBy || [];
+          const hasLiked = likedBy.includes(userId);
+          
+          if (hasLiked) {
+            // Unlike
+            return {
+              ...m,
+              likes: Math.max(0, m.likes - 1),
+              likedBy: likedBy.filter(id => id !== userId)
+            };
+          } else {
+            // Like
+            return {
+              ...m,
+              likes: m.likes + 1,
+              likedBy: [...likedBy, userId]
+            };
+          }
+        }
+        return m;
+      });
+
       await updateDoc(doc(db, 'galleryEvents', eventId), {
         media: updatedMedia
       });

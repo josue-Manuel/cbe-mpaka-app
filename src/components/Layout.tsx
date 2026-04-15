@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Home, Music, Bell, Heart, Phone, Image as ImageIcon } from 'lucide-react';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Music, Bell, Heart, Phone, ImageIcon, Clock, ShieldAlert, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
+import { useProfile } from '../context/ProfileContext';
 
 export default function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { profile, logout } = useProfile();
 
   const navItems = [
     { path: '/app', icon: Home, label: 'Accueil' },
@@ -15,6 +18,57 @@ export default function Layout() {
     { path: '/app/prayer', icon: Heart, label: 'Prière' },
     { path: '/app/contacts', icon: Phone, label: 'Contact' },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/auth');
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  if (profile?.status === 'pending') {
+    return (
+      <div className="flex flex-col h-screen bg-[#F8FAFC] dark:bg-[#0A192F] items-center justify-center p-6 text-center">
+        <div className="w-24 h-24 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-6">
+          <Clock size={48} className="text-amber-600 dark:text-amber-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Compte en attente</h1>
+        <p className="text-slate-600 dark:text-slate-300 mb-8 max-w-md">
+          Votre inscription a bien été enregistrée. Un administrateur doit valider votre compte avant que vous puissiez accéder à l'application. Veuillez patienter.
+        </p>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded-xl text-slate-700 dark:text-slate-300 font-medium active:scale-95 transition-transform"
+        >
+          <LogOut size={20} />
+          <span>Se déconnecter</span>
+        </button>
+      </div>
+    );
+  }
+
+  if (profile?.status === 'blocked') {
+    return (
+      <div className="flex flex-col h-screen bg-[#F8FAFC] dark:bg-[#0A192F] items-center justify-center p-6 text-center">
+        <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6">
+          <ShieldAlert size={48} className="text-red-600 dark:text-red-400" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Compte bloqué</h1>
+        <p className="text-slate-600 dark:text-slate-300 mb-8 max-w-md">
+          Votre compte a été suspendu par un administrateur. Vous ne pouvez plus accéder à l'application.
+        </p>
+        <button 
+          onClick={handleLogout}
+          className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded-xl text-slate-700 dark:text-slate-300 font-medium active:scale-95 transition-transform"
+        >
+          <LogOut size={20} />
+          <span>Se déconnecter</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#F8FAFC] dark:bg-[#0A192F] font-sans overflow-hidden">
