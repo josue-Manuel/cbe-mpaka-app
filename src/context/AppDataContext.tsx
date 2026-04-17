@@ -674,13 +674,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       if (user) {
         // Check if user is admin
         let isAdmin = false;
+        console.log("Checking admin status for:", user.uid, user.email);
         try {
           const docRef = doc(db, 'members', user.uid);
           const docSnap = await getDoc(docRef);
-          if ((docSnap.exists() && docSnap.data().role === 'admin') || (user.email === 'josuemanueljsm@gmail.com' && user.emailVerified)) {
+          console.log("Admin docSnap exists:", docSnap.exists(), "data:", docSnap.data());
+          if ((docSnap.exists() && docSnap.data().role === 'admin') || user.email === 'josuemanueljsm@gmail.com') {
             isAdmin = true;
           }
+          console.log("isAdmin result:", isAdmin);
         } catch (e) {
+          console.error("Error checking admin status", e);
           const msg = e instanceof Error ? e.message : String(e);
           if (msg.includes('offline')) {
             console.warn("Offline: Could not verify admin status from server, using email fallback.");
@@ -691,9 +695,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }
 
         if (isAdmin) {
+          console.log("Setting up contactMessages listener");
           unsubContactMessages = onSnapshot(collection(db, 'contactMessages'), (snapshot) => {
+            console.log("contactMessages snapshot received, count:", snapshot.docs.length);
             setContactMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage)));
           }, (error: any) => {
+            console.error("contactMessages listener error:", error);
             const isPermError = error?.code === 'permission-denied' || String(error?.message || error).toLowerCase().includes('permission');
             if (!isPermError) {
               handleFirestoreError(error, OperationType.LIST, 'contactMessages');

@@ -182,9 +182,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           const dateParts = activity.date.split(' ');
           if (dateParts.length >= 2) {
             const day = parseInt(dateParts[0], 10);
-            const monthStr = dateParts[1].toLowerCase();
+            const monthStr = (dateParts[1] || '').toLowerCase();
             const months = ['jan', 'fév', 'mar', 'avr', 'mai', 'jun', 'jul', 'aoû', 'sep', 'oct', 'nov', 'déc'];
-            const month = months.findIndex(m => monthStr.startsWith(m));
+            const month = months.findIndex(m => {
+              if (!monthStr) return false;
+              try {
+                return monthStr && monthStr.indexOf(m) === 0;
+              } catch (e) {
+                console.error("Error in NotificationContext.tsx", e, monthStr, m);
+                return false;
+              }
+            });
             
             if (month !== -1 && !isNaN(day)) {
               const actDate = new Date();

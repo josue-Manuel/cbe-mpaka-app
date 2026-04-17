@@ -55,10 +55,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
               if (profileDoc.exists()) {
                 const profileData = profileDoc.data() as MemberProfile;
                 setProfile(profileData);
-                setIsAdmin(profileData.role === 'admin' || (currentUser.email === 'josuemanueljsm@gmail.com' && currentUser.emailVerified));
+                setIsAdmin(profileData.role === 'admin' || currentUser.email === 'josuemanueljsm@gmail.com');
               } else {
                 setProfile(null);
-                setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com' && currentUser.emailVerified);
+                setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com');
               }
               setIsLoading(false);
             },

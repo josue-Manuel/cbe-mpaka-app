@@ -875,7 +875,17 @@ export default function Admin() {
           <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Membres Actifs</p>
           <div className="flex items-end justify-between">
             <h4 className="text-2xl font-bold text-slate-800 dark:text-white">{members.filter(m => m.status === 'active').length}</h4>
-            <span className="text-[10px] text-emerald-500 font-bold">+{members.filter(m => m.status === 'active' && m.joinDate && m.joinDate.startsWith(new Date().toISOString().slice(0, 7))).length} ce mois</span>
+            <span className="text-[10px] text-emerald-500 font-bold">+{members.filter(m => {
+              if (!m || typeof m.joinDate !== 'string') return false;
+              try {
+                console.log("Admin.tsx: m.joinDate", m.joinDate);
+                console.log("Admin.tsx: m.joinDate", m.joinDate);
+                return m.joinDate && m.joinDate.indexOf(new Date().toISOString().slice(0, 7)) === 0;
+              } catch (e) {
+                console.error("Error in Admin.tsx", e, m);
+                return false;
+              }
+            }).length} ce mois</span>
           </div>
         </div>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">

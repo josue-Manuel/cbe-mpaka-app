@@ -75,17 +75,8 @@ export const googleProvider = new GoogleAuthProvider();
 
 // Auth helpers
 export const signInWithGoogle = () => {
-  // Check if running as a PWA (installed on home screen)
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-  
-  if (isPWA) {
-    // PWAs handle redirects better than popups
-    return signInWithRedirect(auth, googleProvider);
-  }
-  
-  // For web browsers and AI Studio iframe, use popup
-  // Note: Capacitor (APK) will also use popup, which might have issues, 
-  // but redirect is guaranteed to fail with "localhost blocked" without native plugins.
+  // Always use popup for Google login in this environment as Redirect often fails 
+  // with "missing initial state" or storage partitioning issues in iframes/webviews.
   return signInWithPopup(auth, googleProvider);
 };
 
