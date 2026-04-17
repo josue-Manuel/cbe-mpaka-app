@@ -9,7 +9,7 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { profile, logout } = useProfile();
+  const { profile, logout, isAdmin } = useProfile();
 
   const navItems = [
     { path: '/app', icon: Home, label: 'Accueil' },
@@ -28,7 +28,7 @@ export default function Layout() {
     }
   };
 
-  if (profile?.status === 'pending') {
+  if (profile?.status === 'pending' && !isAdmin) {
     return (
       <div className="flex flex-col h-screen bg-[#F8FAFC] dark:bg-[#0A192F] items-center justify-center p-6 text-center">
         <div className="w-24 h-24 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-6">

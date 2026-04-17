@@ -16,7 +16,9 @@ import {
 } from 'recharts';
 import { AdminAssistant } from '../components/AdminAssistant';
 
-export default function Admin() {
+import { ErrorBoundary } from '../components/ErrorBoundary';
+
+function AdminContent() {
   const navigate = useNavigate();
   const { isAdmin, login, logout, loginWithEmail } = useProfile();
   const { addNotification } = useNotification();
@@ -203,8 +205,9 @@ export default function Admin() {
     try {
       setIsLoggingIn(true);
       await login();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error", error);
+      alert("Erreur de connexion : " + error.message);
     } finally {
       setIsLoggingIn(false);
     }
@@ -539,11 +542,11 @@ export default function Admin() {
             </button>
           </div>
           <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl">
-            <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-2">{leaderMessage.title}</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{leaderMessage.content}</p>
+            <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-2">{leaderMessage?.title}</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{leaderMessage?.content}</p>
             <div className="flex justify-between text-xs text-slate-500">
-              <span>Par: {leaderMessage.author}</span>
-              <span>{leaderMessage.date}</span>
+              <span>Par: {leaderMessage?.author}</span>
+              <span>{leaderMessage?.date}</span>
             </div>
           </div>
         </div>
@@ -639,9 +642,9 @@ export default function Admin() {
             </button>
           </div>
           <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl">
-            <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-2">{dailyMeditation.reference}</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400 italic mb-3">« {dailyMeditation.text} »</p>
-            <p className="text-xs text-slate-500 line-clamp-2">{dailyMeditation.exhortation}</p>
+            <h4 className="font-bold text-sm text-slate-800 dark:text-white mb-2">{dailyMeditation?.reference}</h4>
+            <p className="text-sm text-slate-600 dark:text-slate-400 italic mb-3">« {dailyMeditation?.text} »</p>
+            <p className="text-xs text-slate-500 line-clamp-2">{dailyMeditation?.exhortation}</p>
           </div>
         </div>
 
@@ -2108,8 +2111,8 @@ export default function Admin() {
         {activities.map(activity => (
           <div key={activity.id} className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-4">
             <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex flex-col items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/30">
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold text-lg leading-none">{activity.date.split(' ')[0]}</span>
-              <span className="text-emerald-800 dark:text-emerald-500 text-[10px] font-medium uppercase">{activity.date.split(' ')[1]}</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold text-lg leading-none">{activity.date?.split(' ')[0] || ''}</span>
+              <span className="text-emerald-800 dark:text-emerald-500 text-[10px] font-medium uppercase">{activity.date?.split(' ')[1] || ''}</span>
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start">
@@ -3810,5 +3813,13 @@ export default function Admin() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function Admin() {
+  return (
+    <ErrorBoundary>
+      <AdminContent />
+    </ErrorBoundary>
   );
 }

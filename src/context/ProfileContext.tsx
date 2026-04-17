@@ -55,10 +55,10 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
               if (profileDoc.exists()) {
                 const profileData = profileDoc.data() as MemberProfile;
                 setProfile(profileData);
-                setIsAdmin(profileData.role === 'admin' || currentUser.email === 'josuemanueljsm@gmail.com');
+                setIsAdmin(profileData.role === 'admin' || currentUser.email?.toLowerCase().trim() === 'josuemanueljsm@gmail.com');
               } else {
                 setProfile(null);
-                setIsAdmin(currentUser.email === 'josuemanueljsm@gmail.com');
+                setIsAdmin(currentUser.email?.toLowerCase().trim() === 'josuemanueljsm@gmail.com');
               }
               setIsLoading(false);
             },
@@ -138,8 +138,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         updatedAt: new Date().toISOString(),
       };
       
+      const isUserAdmin = newProfile.role === 'admin' || email.toLowerCase().trim() === 'josuemanueljsm@gmail.com';
+      if (isUserAdmin) {
+        newProfile.role = 'admin';
+        newProfile.status = 'active';
+      }
+      
       await setDoc(doc(db, 'members', newUser.uid), newProfile);
       setProfile(newProfile);
+      setIsAdmin(isUserAdmin);
     } catch (error) {
       console.error("Email registration error:", error);
       throw error;
@@ -168,8 +175,15 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       updatedAt: new Date().toISOString(),
     };
     try {
+      const isUserAdmin = newProfile.role === 'admin' || (newProfile.email && newProfile.email.toLowerCase().trim() === 'josuemanueljsm@gmail.com');
+      if (isUserAdmin) {
+        newProfile.role = 'admin';
+        newProfile.status = 'active';
+      }
+      
       await setDoc(doc(db, 'members', user.uid), newProfile);
       setProfile(newProfile);
+      if (isUserAdmin) setIsAdmin(true);
     } catch (error) {
       console.error("Error creating profile:", error);
       throw error; // Throw to handle in UI

@@ -23,11 +23,17 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = () => {
   if (!aiInstance) {
-    const key = process.env.GEMINI_API_KEY;
-    if (!key) {
-      throw new Error("Clé API Gemini manquante. Veuillez configurer GEMINI_API_KEY.");
+    try {
+      // In APK builds without .env, process might be undefined or GEMINI_API_KEY missing
+      const key = typeof process !== 'undefined' && process.env ? process.env.GEMINI_API_KEY : '';
+      if (!key) {
+        throw new Error("Clé API manquante");
+      }
+      aiInstance = new GoogleGenAI({ apiKey: key });
+    } catch (e) {
+      console.warn("L'IA n'a pas pu être initialisée. Clé API probablement manquante dans l'APK.");
+      return null;
     }
-    aiInstance = new GoogleGenAI({ apiKey: key });
   }
   return aiInstance;
 };
@@ -181,8 +187,18 @@ export const AdminAssistant: React.FC = () => {
       `;
 
       const ai = getAI();
+      if (!ai) {
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: "⚠️ **Erreur de Configuration AI** : L'assistant Google Gemini ne peut pas fonctionner en version APK car la clé API (GEMINI_API_KEY) n'est pas présente dans l'application compilée. Cette mesure de sécurité empêche le piratage de votre clé. Vous devez utiliser la version Web hébergée pour profiter de l'IA.",
+          timestamp: new Date()
+        }]);
+        setIsLoading(false);
+        return;
+      }
+
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash",
         contents: [
           { role: 'user', parts: [{ text: context }] },
           ...messages.map(m => ({
