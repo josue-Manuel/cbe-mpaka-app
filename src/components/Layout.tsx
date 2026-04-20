@@ -91,7 +91,8 @@ export default function Layout() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-around items-center pb-safe pt-2 px-1 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] shrink-0 z-10">
+      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex justify-around items-center pb-safe pt-2 px-1 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] shrink-0 z-10 relative">
+        <div className="absolute -top-4 right-2 text-[8px] text-slate-400">v1.1 (Test)</div>
         {navItems.map((item) => (
           <NavLink
             key={item.path}

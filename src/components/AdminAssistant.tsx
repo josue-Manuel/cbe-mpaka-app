@@ -45,6 +45,12 @@ interface Message {
 }
 
 export const AdminAssistant: React.FC = () => {
+  // Detect if running inside a Capacitor/APK environment
+  const isMobileApp = typeof window !== 'undefined' && (window as any).Capacitor;
+
+  // If in APK, do not render the assistant at all
+  if (isMobileApp) return null;
+
   const { 
     members, 
     announcements, 

@@ -180,7 +180,7 @@ export default function Prayer() {
           )}
           
           <button 
-            onClick={() => navigate('/app/testimony')}
+            onClick={() => navigate('/app/testimonies')}
             className="w-full bg-[#D9A05B] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform mt-6"
           >
             <Plus size={18} /> Partager mon témoignage

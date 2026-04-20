@@ -40,9 +40,9 @@ export default function Settings() {
   };
 
   const applyUpdate = () => {
-    // In a real PWA, we'd trigger the service worker update.
-    // Here we'll just reload the page to fetch the latest assets.
-    window.location.reload();
+    // Open the external APK download URL in the system browser
+    const apkDownloadUrl = 'URL_DE_TON_DERNIER_APK'; // REMPLACE CECI PAR LE LIEN REEL
+    window.open(apkDownloadUrl, '_system');
   };
 
   const handleClearCache = () => {
