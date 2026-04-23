@@ -41,9 +41,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
-        ((exists(/databases/$(database)/documents/members/$(request.auth.uid)) && get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role == 'admin') ||
-         (request.auth.token.email == "josuemanueljsm@gmail.com"));
+      return isAuthenticated() && (
+        request.auth.token.email == "josuemanueljsm@gmail.com" ||
+        (exists(/databases/$(database)/documents/members/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/members/$(request.auth.uid)).data.role == 'admin')
+      );
     }
 
     function isValidEmail(email) {
@@ -58,19 +60,22 @@ service cloud.firestore {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
     }
 
-    // Domain Validators
-    function isValidAnnouncement(data) {
-      return hasOnlyAllowedFields(['title', 'content', 'date', 'category', 'author', 'isUrgent']) &&
-             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
-             data.date is string && data.category is string && data.author is string && data.isUrgent is bool;
+    function isValidTestimony(data) {
+        return data.keys().hasAll(['userId', 'content', 'date', 'status', 'isAnonymous', 'likes', 'title', 'category']) &&
+               data.keys().size() == 8 &&
+               data.userId is string && data.userId.size() > 0 &&
+               data.content is string && data.content.size() > 0 && data.content.size() <= 3000 &&
+               data.status in ['pending', 'approved', 'rejected'] &&
+               data.isAnonymous is bool && data.likes is number;
     }
 
     function isValidPrayer(data) {
-      return hasOnlyAllowedFields(['author', 'content', 'date', 'category', 'likes', 'isUrgent', 'status', 'isAnonymous', 'userId']) &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 2000 &&
+      return data.keys().hasAll(['userId', 'content', 'date', 'status', 'isUrgent', 'isAnonymous', 'likes']) &&
+             data.keys().size() == 7 &&
+             data.userId is string && data.userId.size() > 0 &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 2000 &&
              data.status in ['pending', 'approved', 'rejected'] &&
-             data.likes is number && data.isUrgent is bool && data.isAnonymous is bool && data.userId is string;
+             data.isUrgent is bool && data.isAnonymous is bool && data.likes is number;
     }
 
     function isValidMember(data) {
@@ -107,22 +112,43 @@ service cloud.firestore {
 
     match /prayers/{id} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes'])));
-      allow delete: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isValidPrayer(incoming()) && incoming().userId == request.auth.uid;
+      
+      // Enforce strict update: Only owner or admin can update specific fields
+      allow update: if isSignedIn() && isValidPrayer(incoming()) && (
+          isAdmin() || 
+          (isOwner(existing().userId) && 
+           incoming().userId == existing().userId && // UserId immutable
+           incoming().status == existing().status && // Status cannot be changed by user
+           incoming().diff(existing()).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes', 'title', 'category']))
+      );
+      
+      allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
     }
 
+    // Updated testimonies match
     match /testimonies/{id} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes'])));
-      allow delete: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if isSignedIn() && isValidTestimony(incoming()) && incoming().userId == request.auth.uid;
+      
+      allow update: if isSignedIn() && isValidTestimony(incoming()) && (
+          isAdmin() || 
+          (isOwner(existing().userId) && 
+           incoming().userId == existing().userId &&
+           incoming().status == existing().status &&
+           incoming().diff(existing()).affectedKeys().hasOnly(['content', 'isAnonymous', 'likes', 'title', 'category', 'imageUrl']))
+      );
+      
+      allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
     }
 
     match /members/{userId} {
-      allow read: if isAuthenticated();
-      allow create: if isAdmin() || (isAuthenticated() && isOwner(userId) && request.resource.data.role == 'member' && isValidMember(request.resource.data));
-      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role && isValidMember(request.resource.data));
+      allow read: if isSignedIn();
+      allow create: if isAdmin() || (isSignedIn() && request.auth.uid == userId && isValidMember(incoming()));
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == userId && 
+           incoming().role == existing().role && 
+           incoming().status == existing().status && 
+           isValidMember(incoming()));
       allow delete: if isAdmin();
     }
 
