@@ -700,12 +700,19 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
             console.log("contactMessages snapshot received, count:", snapshot.docs.length);
             setContactMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ContactMessage)));
           }, (error: any) => {
-            console.error("contactMessages listener error:", error);
-            const isPermError = error?.code === 'permission-denied' || String(error?.message || error).toLowerCase().includes('permission');
-            if (!isPermError) {
-              handleFirestoreError(error, OperationType.LIST, 'contactMessages');
+            const errorMessage = String(error?.message || error || "").toLowerCase();
+            const isPermError = 
+              error?.code === 'permission-denied' || 
+              errorMessage.includes('permission') || 
+              errorMessage.includes('insufficient') ||
+              errorMessage.includes('unauthorized');
+            
+            if (isPermError) {
+              console.warn("Permission denied accessing contactMessages, likely not an admin.");
+              setContactMessages([]);
             } else {
-              console.warn("Permission denied accessing contactMessages, likely not an admin yet.");
+              console.error("contactMessages listener error:", error);
+              handleFirestoreError(error, OperationType.LIST, 'contactMessages');
             }
           });
         }
@@ -1470,7 +1477,18 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       await deleteDoc(doc(db, 'contactMessages', id));
       addLog('Message', `Suppression du message : ${id}`, 'warning');
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, 'contactMessages');
+      const errorMessage = String(error?.message || error || "").toLowerCase();
+      const isPermError = 
+        (error as any)?.code === 'permission-denied' || 
+        errorMessage.includes('permission') || 
+        errorMessage.includes('insufficient') ||
+        errorMessage.includes('unauthorized');
+        
+      if (!isPermError) {
+        handleFirestoreError(error, OperationType.DELETE, 'contactMessages');
+      } else {
+        console.warn("Permission denied attempting to delete contactMessage.");
+      }
     }
   };
 
